@@ -1,0 +1,22 @@
+{
+  "name": "kavach-worker",
+  "version": "1.0.0",
+  "description": "Worker for kavach scans",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node index.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.0.0",
+    "@supabase/supabase-js": "^2.0.0",
+    "bullmq": "^5.0.0",
+    "ioredis": "^5.0.0",
+    "ollama": "^0.5.0",
+    "simple-git": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^5.0.0"
+  }
+}
