@@ -1,36 +1,189 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛡️ KAVACH — AI Code Security Analyzer
 
-## Getting Started
+> **"AI wrote the code. KAVACH makes it secure."**
 
-First, run the development server:
+KAVACH is an open-source security analysis tool designed specifically for 
+AI-generated code. It scans codebases built with ChatGPT, GitHub Copilot, 
+Cursor, Bolt.new, v0.dev, and other AI coding tools to find security 
+vulnerabilities that AI commonly introduces.
+
+---
+
+## 🎯 The Problem
+
+AI-generated code contains **40% more security vulnerabilities** than 
+human-written code ([Stanford Research, 2023](https://arxiv.org/abs/2211.03622)). 
+Most developers using AI tools deploy code without any security review.
+
+Common vulnerabilities found in AI-generated code:
+- SQL injection via string concatenation
+- Hardcoded API keys and secrets
+- Missing input validation
+- Insecure authentication
+- XSS vulnerabilities
+- Weak cryptography
+
+---
+
+## ✨ What KAVACH Does
+
+- 🔍 **Static Analysis** — Semgrep-powered pattern detection
+- 🔑 **Secret Detection** — Finds hardcoded API keys and credentials
+- 🤖 **AI Deep Review** — Local LLM analyzes code for complex vulnerabilities
+- 📊 **Security Scoring** — Clear 0-100 score with A-F grading
+- 🔧 **Fix Suggestions** — Get the exact fixed code for each vulnerability
+- 📈 **OWASP Mapping** — Categorizes issues by OWASP Top 10
+
+---
+
+## 🛠️ Tech Stack
+
+| Component | Technology | Cost |
+|-----------|-----------|------|
+| Frontend | Next.js 14, TypeScript, Tailwind CSS, shadcn/ui | Free (Vercel) |
+| Database | Supabase (PostgreSQL) | Free tier |
+| Queue | Upstash Redis + BullMQ | Free tier |
+| Storage | Cloudflare R2 | Free tier (10GB) |
+| AI Engine | Ollama (Llama 3.1 8B) — runs locally | $0 |
+| Static Scan | Semgrep | Open source |
+| Secret Scan | Gitleaks | Open source |
+| Backup AI | Google Gemini API | Free tier |
+| Auth | Supabase Auth (GitHub OAuth) | Free tier |
+
+**Total monthly cost: $0.00**
+
+---
+
+## 🏗️ Architecture
+
+```
+User → Vercel (Frontend) → Upstash Redis Queue → MacBook Worker → Supabase (Results)
+                                                        ↓
+                                          Semgrep + Gitleaks + Ollama
+```
+
+See [docs/architecture.md](docs/architecture.md) for detailed system design.
+
+---
+
+## 🚀 Setup
+
+### Prerequisites
+- Node.js 20+
+- Ollama installed locally
+- Supabase account (free)
+- Upstash account (free)
+- Cloudflare account (free)
+
+### Installation
+
+**1. Clone the repository**
+
+```bash
+git clone https://github.com/Tauqeer7Khan/Kavach.git
+cd Kavach
+```
+
+**2. Install dependencies**
+
+```bash
+npm install
+```
+
+**3. Set up environment variables**
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in your API keys and credentials in `.env.local`.
+
+**4. Set up Supabase database**
+
+- Create a project at [supabase.com](https://supabase.com)
+- Run `database/schema.sql` in the SQL Editor
+- Run `database/seed.sql` for test data
+
+**5. Install Ollama and download model**
+
+```bash
+brew install ollama
+ollama serve
+ollama pull llama3.1:8b
+```
+
+**6. Run the frontend**
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**7. Run the worker (separate terminal)**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd worker
+npm install
+npx ts-node index.ts
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 📁 Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+kavach/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Login, register pages
+│   ├── (dashboard)/       # Protected dashboard
+│   ├── (marketing)/       # Landing, pricing pages
+│   └── api/               # API routes
+├── components/            # React components
+├── database/              # SQL schemas and seeds
+├── docs/                  # Documentation
+├── hooks/                 # Custom React hooks
+├── lib/                   # Backend utilities
+├── types/                 # TypeScript definitions
+└── worker/                # Local scan worker process
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🌐 Supported Languages
 
-## Deploy on Vercel
+JavaScript, TypeScript, Python, PHP, Java, Go, Ruby, Rust, C, C++, C#
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🚧 Current Status
+
+**In active development** — Building in public over 7 days.
+
+See [docs/progress-log.md](docs/progress-log.md) for daily progress updates.
+
+### Build Progress
+
+- ✅ **Day 1:** Project foundation, database schema, TypeScript types
+- ⏳ **Day 2:** Backend libraries + Authentication
+- ⏳ **Day 3:** Worker process + Scan pipeline
+- ⏳ **Day 4:** Security analysis engine (Semgrep, Gitleaks, Ollama)
+- ⏳ **Day 5:** API routes + Dashboard UI
+- ⏳ **Day 6:** Landing page + Polish
+- ⏳ **Day 7:** Launch
+
+---
+
+## 📄 License
+
+MIT
+
+---
+
+## 👤 Author
+
+**Tauqeer Khan**
+- GitHub: [@Tauqeer7Khan](https://github.com/Tauqeer7Khan)
+
+---
+
+*Built for vibe coders. Made secure by KAVACH.*
+*Other than that I'll say "SAB BATA DUN?"*
