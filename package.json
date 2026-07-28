@@ -9,13 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1096.0",
+    "@aws-sdk/client-s3": "^3.1097.0",
     "@aws-sdk/s3-request-presigner": "^3.1096.0",
     "@base-ui/react": "^1.6.0",
     "@hookform/resolvers": "^5.5.7",
     "@monaco-editor/react": "^4.7.0",
-    "@supabase/ssr": "^0.12.3",
-    "@supabase/supabase-js": "^2.110.9",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.111.0",
     "@upstash/redis": "^1.38.0",
     "bullmq": "^5.81.2",
     "class-variance-authority": "^0.7.1",

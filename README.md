@@ -1,27 +1,25 @@
 # 🛡️ KAVACH — AI Code Security Analyzer
 
+[![Status: In Active Development](https://img.shields.io/badge/Status-In_Active_Development-blueviolet?style=for-the-badge)](https://github.com/Tauqeer7Khan/Kavach)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
 > **"AI wrote the code. KAVACH makes it secure."**
 
-KAVACH is an open-source security analysis tool designed specifically for 
-AI-generated code. It scans codebases built with ChatGPT, GitHub Copilot, 
-Cursor, Bolt.new, v0.dev, and other AI coding tools to find security 
-vulnerabilities that AI commonly introduces.
+KAVACH is an open-source security analysis tool designed specifically for AI-generated code. It scans codebases built with ChatGPT, GitHub Copilot, Cursor, Bolt.new, v0.dev, and other AI coding tools to find security vulnerabilities that AI commonly introduces.
 
 ---
 
 ## 🎯 The Problem
 
-AI-generated code contains **40% more security vulnerabilities** than 
-human-written code ([Stanford Research, 2023](https://arxiv.org/abs/2211.03622)). 
-Most developers using AI tools deploy code without any security review.
+AI-generated code contains **40% more security vulnerabilities** than human-written code ([Stanford Research, 2023](https://arxiv.org/abs/2211.03622)). Most developers using AI tools deploy code without any security review.
 
 Common vulnerabilities found in AI-generated code:
-- SQL injection via string concatenation
-- Hardcoded API keys and secrets
-- Missing input validation
-- Insecure authentication
-- XSS vulnerabilities
-- Weak cryptography
+- 🐛 SQL injection via string concatenation
+- 🔑 Hardcoded API keys and secrets
+- 🚫 Missing input validation
+- 🔓 Insecure authentication
+- 💉 XSS vulnerabilities
+- 🕵️ Weak cryptography
 
 ---
 
@@ -29,7 +27,7 @@ Common vulnerabilities found in AI-generated code:
 
 - 🔍 **Static Analysis** — Semgrep-powered pattern detection
 - 🔑 **Secret Detection** — Finds hardcoded API keys and credentials
-- 🤖 **AI Deep Review** — Local LLM analyzes code for complex vulnerabilities
+- 🤖 **AI Deep Review** — Local LLM (Ollama) analyzes code for complex vulnerabilities
 - 📊 **Security Scoring** — Clear 0-100 score with A-F grading
 - 🔧 **Fix Suggestions** — Get the exact fixed code for each vulnerability
 - 📈 **OWASP Mapping** — Categorizes issues by OWASP Top 10
@@ -50,17 +48,15 @@ Common vulnerabilities found in AI-generated code:
 | Backup AI | Google Gemini API | Free tier |
 | Auth | Supabase Auth (GitHub OAuth) | Free tier |
 
-**Total monthly cost: $0.00**
+**Total monthly cost: $0.00** 🚀
 
 ---
 
 ## 🏗️ Architecture
 
-```
 User → Vercel (Frontend) → Upstash Redis Queue → MacBook Worker → Supabase (Results)
-                                                        ↓
-                                          Semgrep + Gitleaks + Ollama
-```
+↓
+Semgrep + Gitleaks + Ollama
 
 See [docs/architecture.md](docs/architecture.md) for detailed system design.
 
@@ -154,21 +150,24 @@ JavaScript, TypeScript, Python, PHP, Java, Go, Ruby, Rust, C, C++, C#
 
 ---
 
-## 🚧 Current Status
+🚧 Current Status & Build Progress
+In active development — Building in public over 7 days.
 
-**In active development** — Building in public over 7 days.
+The 7-Day Build Plan
+✅ Day 1: Project foundation, database schema, TypeScript types
+✅ Day 2: Backend libraries, GitHub OAuth Auth, Middleware, User Sessions
+⏳ Day 3: Worker process + Scan pipeline backbone
+⏳ Day 4: Security analysis engine (Semgrep, Gitleaks, Ollama)
+⏳ Day 5: API routes + Dashboard UI + New Scan Flow
+⏳ Day 6: Landing page + Scan Reports + Polish
+⏳ Day 7: Final testing, deployment, and public launch
 
-See [docs/progress-log.md](docs/progress-log.md) for daily progress updates.
-
-### Build Progress
-
-- ✅ **Day 1:** Project foundation, database schema, TypeScript types
-- ⏳ **Day 2:** Backend libraries + Authentication
-- ⏳ **Day 3:** Worker process + Scan pipeline
-- ⏳ **Day 4:** Security analysis engine (Semgrep, Gitleaks, Ollama)
-- ⏳ **Day 5:** API routes + Dashboard UI
-- ⏳ **Day 6:** Landing page + Polish
-- ⏳ **Day 7:** Launch
+Day 2 Completed ✅
+Set up Supabase, Redis, R2, and queue utility libraries
+Implemented GitHub OAuth authentication with Supabase Auth
+Built protected dashboard routes with Next.js middleware
+Created user session management hook (useUser)
+Users successfully upserted to Supabase database on login
 
 ---
 
@@ -186,4 +185,4 @@ MIT
 ---
 
 *Built for vibe coders. Made secure by KAVACH.*
-*Other than that I'll say "SAB BATA DUN?"*
+*Other than that "SAB BATA DUN?😜"*
