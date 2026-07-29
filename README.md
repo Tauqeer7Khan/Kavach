@@ -150,6 +150,7 @@ JavaScript, TypeScript, Python, PHP, Java, Go, Ruby, Rust, C, C++, C#
 
 ---
 
+```
 🚧 Current Status & Build Progress
 In active development — Building in public over 7 days.
 
@@ -168,7 +169,7 @@ Implemented GitHub OAuth authentication with Supabase Auth
 Built protected dashboard routes with Next.js middleware
 Created user session management hook (useUser)
 Users successfully upserted to Supabase database on login
-
+```
 ---
 
 ## 📄 License
@@ -183,6 +184,7 @@ MIT
 - GitHub: [@Tauqeer7Khan](https://github.com/Tauqeer7Khan)
 
 ---
+
 
 *Built for vibe coders. Made secure by KAVACH.*
 *Other than that "SAB BATA DUN?😜"*
