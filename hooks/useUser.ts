@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import { User } from '@/types'
+import { AuthChangeEvent, Session } from '@supabase/supabase-js'
 
 export function useUser() {
   const [user, setUser] = useState<User | null>(null)
@@ -17,20 +18,20 @@ export function useUser() {
       try {
         setLoading(true)
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        
+
         if (sessionError) throw sessionError
-        
+
         if (session?.user) {
           const { data: userData, error: userError } = await supabase
             .from('users')
             .select('*')
             .eq('id', session.user.id)
             .single()
-            
+
           if (userError) {
-             throw userError
+            throw userError
           }
-          
+
           if (mounted) {
             setUser(userData as User)
           }
@@ -53,7 +54,7 @@ export function useUser() {
 
     fetchUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
         fetchUser()
       } else if (event === 'SIGNED_OUT') {
