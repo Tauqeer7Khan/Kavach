@@ -188,4 +188,6 @@ MIT
 
 *Built for **Vibe Coders**. Made Secure by **KAVACH**.*
 
-*"**SAB BATA DUN?**"😜*
+<p align="right">
+  <em>"SAB BATA DUN?" 😜</em>
+</p>
