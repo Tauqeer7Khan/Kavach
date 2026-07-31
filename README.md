@@ -191,7 +191,7 @@ Built language detector for 12 programming languages
 Wired complete scan pipeline end-to-end
 First successful end-to-end scan: 85/100 (Grade A) in 7 seconds
 ```
-```
+
 📊 Key Metrics
 
 Metric	Value
@@ -200,7 +200,6 @@ Vulnerability detection layers	3 (Static + Secret + AI)
 OWASP categories covered	Top 10 (2021)
 Programming languages	12
 Infrastructure cost	$0/month
-```
 ---
 
 ## 📄 License
