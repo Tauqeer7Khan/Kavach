@@ -279,8 +279,8 @@ const ProductPreview = () => {
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`px-6 py-2.5 rounded-lg font-heading font-medium capitalize transition-all text-sm ${activeTab === tab
-                                    ? 'bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white shadow-md shadow-purple-500/20'
-                                    : 'bg-white dark:bg-[#18181B] text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900'
+                                ? 'bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white shadow-md shadow-purple-500/20'
+                                : 'bg-white dark:bg-[#18181B] text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900'
                                 }`}
                         >
                             {tab}
@@ -1191,4 +1191,3 @@ export default function App() {
         </>
     );
 }
-

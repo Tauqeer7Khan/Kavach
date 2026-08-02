@@ -120,11 +120,111 @@
   background: #7C3AED;
 }
 
-.grid-pattern {
-  background-image: radial-gradient(circle, rgba(63, 63, 70, 0.3) 1px, transparent 1px);
-  background-size: 24px 24px;
+/* ===== KAVACH LANDING PAGE STYLES ===== */
+
+/* Custom Fonts */
+.font-heading { font-family: 'Space Grotesk', sans-serif; }
+.font-body { font-family: 'Inter', sans-serif; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+.font-accent { font-family: 'Instrument Serif', serif; }
+
+/* Dark Mode Transitions */
+html { transition: background-color 0.3s ease, color 0.3s ease; }
+
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+
+/* Squiggly underline for vulnerabilities */
+.wavy-underline {
+  text-decoration: underline wavy #F87171 2px;
+  text-underline-offset: 3px;
 }
 
+/* Unique Cards */
 .unique-card {
-  background-image: linear-gradient(to bottom, transparent, rgba(124, 58, 237, 0.02));
+   background-image: linear-gradient(to bottom, transparent, rgba(124, 58, 237, 0.02));
 }
+
+/* Background Grid */
+.grid-pattern {
+  background-image: radial-gradient(circle, rgba(161, 161, 170, 0.2) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.dark .grid-pattern {
+  background-image: radial-gradient(circle, rgba(63, 63, 70, 0.3) 1px, transparent 1px);
+}
+
+/* Noise Overlay */
+.noise-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Custom Cursor */
+.cursor-glow {
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: transform 0.1s ease-out;
+  z-index: 9999;
+  mix-blend-mode: screen;
+}
+
+/* Animations */
+@keyframes scanInfinite {
+  0% { top: -100%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+.scan-infinite-animation { animation: scanInfinite 2s linear infinite; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.fade-in-animation { animation: fadeIn 0.4s ease-in forwards; }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-up-animation { animation: slideUp 0.4s ease-out forwards; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+.animate-float { animation: float 6s ease-in-out infinite; }
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(124, 58, 237, 0.5); }
+}
+.animate-glow { animation: glow 3s ease-in-out infinite; }
+
+/* Interactions */
+.card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; }
+.card-hover:hover { transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) scale(1.01); }
+
+.btn-ripple { position: relative; overflow: hidden; }
+.btn-ripple::after {
+  content: ""; display: block; position: absolute; width: 100%; height: 100%;
+  top: 0; left: 0; pointer-events: none;
+  background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+  background-repeat: no-repeat; background-position: 50%;
+  transform: scale(10, 10); opacity: 0; transition: transform .5s, opacity 1s;
+}
+.btn-ripple:active::after { transform: scale(0, 0); opacity: .2; transition: 0s; }
+
+.text-glow { text-shadow: 0 0 40px rgba(124, 58, 237, 0.3); }
+/* ===== END KAVACH LANDING PAGE STYLES ===== */

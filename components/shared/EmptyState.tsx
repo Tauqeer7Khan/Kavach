@@ -5,7 +5,7 @@ import { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 
 interface EmptyStateProps {
-  icon: LucideIcon;
+  icon: React.ElementType | React.ReactNode;
   title: string;
   description: string;
   actionLabel?: string;
@@ -14,7 +14,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({
-  icon: Icon,
+  icon,
   title,
   description,
   actionLabel,
@@ -33,7 +33,10 @@ export function EmptyState({
   return (
     <div className="flex flex-col items-center justify-center p-8 h-full min-h-[400px]">
       <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-[#27272A] flex items-center justify-center mb-6">
-        <Icon className="h-8 w-8 text-zinc-600" />
+        {React.isValidElement(icon) ? icon : (() => {
+          const Icon = icon as React.ElementType;
+          return <Icon className="h-8 w-8 text-zinc-600" />;
+        })()}
       </div>
       <h3 className="font-heading font-semibold text-xl text-white mb-2">{title}</h3>
       <p className="font-body text-sm text-zinc-400 mb-6 max-w-md text-center">{description}</p>
