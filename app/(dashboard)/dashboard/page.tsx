@@ -118,14 +118,14 @@ export default async function DashboardPage() {
             title="Total Scans"
             value={stats.totalScans}
             subtitle="All time"
-            icon={ScanSearch}
+            icon={<ScanSearch className="h-5 w-5" />}
             color="indigo"
           />
           <StatCard
             title="Average Score"
             value={stats.avgScore !== null ? `${stats.avgScore}/100` : 'N/A'}
             subtitle="Completed scans"
-            icon={TrendingUp}
+            icon={<TrendingUp className="h-5 w-5" />}
             color={
               stats.avgScore === null ? 'default'
               : stats.avgScore >= 80 ? 'green'
@@ -137,14 +137,14 @@ export default async function DashboardPage() {
             title="Vulnerabilities Found"
             value={stats.totalVulns}
             subtitle="Across all scans"
-            icon={AlertTriangle}
+            icon={<AlertTriangle className="h-5 w-5" />}
             color="yellow"
           />
           <StatCard
             title="Critical Issues"
             value={stats.totalCritical}
             subtitle={stats.totalCritical > 0 ? 'Needs attention!' : 'All clear'}
-            icon={AlertOctagon}
+            icon={<AlertOctagon className="h-5 w-5" />}
             color={stats.totalCritical > 0 ? 'red' : 'green'}
           />
         </div>

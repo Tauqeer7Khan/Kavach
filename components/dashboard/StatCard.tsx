@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { type LucideIcon } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -7,7 +8,7 @@ interface StatCardProps {
   title: string
   value: string | number
   subtitle?: string
-  icon: LucideIcon
+  icon: React.ElementType | React.ReactNode
   color?: 'default' | 'red' | 'green' | 'yellow' | 'indigo'
   isLoading?: boolean
 }
@@ -16,7 +17,7 @@ export default function StatCard({
   title,
   value,
   subtitle,
-  icon: Icon,
+  icon,
   color = 'default',
   isLoading = false,
 }: StatCardProps) {
@@ -26,6 +27,14 @@ export default function StatCard({
     green: 'text-green-400 bg-green-500/10',
     yellow: 'text-yellow-400 bg-yellow-500/10',
     indigo: 'text-indigo-400 bg-indigo-500/10',
+  }
+
+  const renderIcon = () => {
+    if (React.isValidElement(icon)) {
+      return icon;
+    }
+    const Icon = icon as React.ElementType;
+    return <Icon className="h-5 w-5" />;
   }
 
   if (isLoading) {
@@ -46,7 +55,7 @@ export default function StatCard({
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-zinc-400 font-medium">{title}</p>
         <div className={`p-2.5 rounded-lg ${iconColors[color]}`}>
-          <Icon className="h-5 w-5" />
+          {renderIcon()}
         </div>
       </div>
       <p className="text-3xl font-bold text-white mb-1">{value}</p>
