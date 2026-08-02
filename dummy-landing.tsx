@@ -1,0 +1,1194 @@
+import React, { useState, useEffect, useRef } from 'react';
+
+// --- CUSTOM ANIMATION HOOK & COMPONENT ---
+const Reveal = ({ children, delay = 0, direction = 'up', className = '' }) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const ref = useRef(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) setIsVisible(true);
+            },
+            { threshold: 0.1, rootMargin: '50px' }
+        );
+        if (ref.current) observer.observe(ref.current);
+        return () => observer.disconnect();
+    }, []);
+
+    const getTransform = () => {
+        if (isVisible) return 'translate(0, 0)';
+        switch (direction) {
+            case 'up': return 'translateY(30px)';
+            case 'left': return 'translateX(-30px)';
+            case 'right': return 'translateX(30px)';
+            default: return 'translateY(30px)';
+        }
+    };
+
+    return (
+        <div
+            ref={ref}
+            className={className}
+            style={{
+                opacity: isVisible ? 1 : 0,
+                transform: getTransform(),
+                transition: `opacity 0.6s ease-out ${delay}ms, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`
+            }}
+        >
+            {children}
+        </div>
+    );
+};
+
+// --- ICONS & LOGOS ---
+const Icons = {
+    KavachLogo: (p) => (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" {...p}>
+            <path d="M16 2L4 8V16C4 22.6274 9.37258 28 16 30C22.6274 28 28 22.6274 28 16V8L16 2Z" fill="url(#kavach-gradient)" />
+            <path d="M11 15L14.5 18.5L21 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <defs>
+                <linearGradient id="kavach-gradient" x1="4" y1="2" x2="28" y2="30">
+                    <stop offset="0%" stopColor="#8B5CF6" />
+                    <stop offset="100%" stopColor="#7C3AED" />
+                </linearGradient>
+            </defs>
+        </svg>
+    ),
+    Sun: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>,
+    Moon: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>,
+    Menu: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>,
+    X: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M18 6 6 18M6 6l12 12" /></svg>,
+    ArrowRight: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 12h14M12 5l7 7-7 7" /></svg>,
+    Play: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polygon points="5 3 19 12 5 21 5 3" /></svg>,
+    AlertTriangle: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></svg>,
+    CheckCircle2: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>,
+    Code2: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>,
+    Github: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.022c3.12-.34 6.5-1.54 6.5-7.04A5.4 5.4 0 0 0 19 5.07a5.07 5.07 0 0 0-.17-3.07s-1.3-.41-4.22 1.57a13.3 13.3 0 0 0-7.22 0C4.3 1.58 3 1.99 3 1.99a5.07 5.07 0 0 0-.17 3.07A5.4 5.4 0 0 0 1 8.91c0 5.49 3.37 6.69 6.49 7.03A4.8 4.8 0 0 0 6.5 19v3" /><path d="M5 20l-1 1-2-1" /></svg>,
+    Bug: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m8 2 1.88 1.88" /><path d="M14.12 3.88 16 2" /><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" /><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" /><path d="M12 20v-9" /><path d="M6.53 9C4.6 8.8 3 7.1 3 5" /><path d="M17.47 9c1.93-.2 3.53-1.9 3.53-4" /><path d="M8 14H4" /><path d="M20 14h-4" /><path d="M9 18h-5" /><path d="M20 18h-5" /></svg>,
+    Key: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4" /><path d="m21 2-9.6 9.6" /><circle cx="7.5" cy="15.5" r="5.5" /></svg>,
+    Zap: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
+    ShieldOff: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m2 2 20 20" /><path d="M5 5a1 1 0 0 0-1 1v7c0 6 8 10 8 10a51.81 51.81 0 0 0 5.86-3.83" /><path d="M19.34 14.15A42.12 42.12 0 0 0 20 13V5l-8-3-3.14 1.18" /></svg>,
+    Lock: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
+    FileWarning: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>,
+    Search: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>,
+    Check: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polyline points="20 6 9 17 4 12" /></svg>,
+    // FIX #13: Replaced emojis with Lucide icons (Clipboard and Wrench added)
+    Clipboard: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg>,
+    Wrench: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>,
+};
+
+// --- SECTION DIVIDER ---
+const SectionDivider = () => (
+    <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-200 dark:via-zinc-800 to-transparent" />
+);
+
+// --- COMPONENTS ---
+
+// 1. Navigation Bar
+const Navbar = ({ isDark, toggleTheme }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <nav className="sticky top-0 z-50 w-full backdrop-blur-xl bg-[#FAFAF9]/80 dark:bg-[#09090B]/80 border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-300">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-center h-16">
+                    <div className="flex items-center space-x-2">
+                        <div className="p-1.5 rounded-md filter drop-shadow-[0_0_8px_rgba(139,92,246,0.4)]">
+                            <Icons.KavachLogo className="h-7 w-7" />
+                        </div>
+                        <span className="font-heading font-bold text-xl tracking-tight text-[#18181B] dark:text-[#FAFAF9]">
+                            KAVACH
+                        </span>
+                        <span className="font-mono text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-1.5 py-0.5 rounded ml-2 mt-1 border border-zinc-200 dark:border-zinc-700">
+                            BETA
+                        </span>
+                    </div>
+
+                    <div className="hidden md:flex items-center space-x-8 text-sm font-body font-medium text-zinc-600 dark:text-zinc-300">
+                        {/* FIX #4: Remove 'Pricing' from nav links */}
+                        {['Features', 'How it Works', 'FAQ'].map(item => (
+                            <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className="group relative hover:text-[#7C3AED] transition-colors">
+                                {item}
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#7C3AED] transition-all group-hover:w-full rounded-full"></span>
+                            </a>
+                        ))}
+                    </div>
+
+                    <div className="hidden md:flex items-center space-x-4">
+                        <a href="https://github.com" target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-[#18181B] dark:hover:text-white transition-colors">
+                            <Icons.Github className="h-5 w-5" />
+                        </a>
+                        <button
+                            onClick={toggleTheme}
+                            className="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors text-zinc-500 dark:text-zinc-400"
+                            aria-label="Toggle Dark Mode"
+                        >
+                            {isDark ? <Icons.Sun className="h-5 w-5" /> : <Icons.Moon className="h-5 w-5" />}
+                        </button>
+                        <button className="bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white px-5 py-2.5 rounded-lg font-heading font-semibold text-sm transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/25 btn-ripple">
+                            Try Free
+                        </button>
+                    </div>
+
+                    <div className="md:hidden flex items-center">
+                        <button
+                            onClick={toggleTheme}
+                            className="p-2 mr-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors text-zinc-500 dark:text-zinc-400"
+                        >
+                            {isDark ? <Icons.Sun className="h-5 w-5" /> : <Icons.Moon className="h-5 w-5" />}
+                        </button>
+                        <button onClick={() => setIsOpen(!isOpen)} className="text-zinc-600 dark:text-zinc-300">
+                            {isOpen ? <Icons.X className="h-6 w-6" /> : <Icons.Menu className="h-6 w-6" />}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Mobile Dropdown */}
+            <div className={`md:hidden bg-[#FAFAF9] dark:bg-[#09090B] border-b border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="px-4 pt-2 pb-6 space-y-4 flex flex-col font-body">
+                    {/* FIX #4: Remove 'Pricing' from mobile nav links */}
+                    <a href="#features" onClick={() => setIsOpen(false)} className="text-zinc-600 dark:text-zinc-300 py-2 border-b border-zinc-100 dark:border-zinc-800">Features</a>
+                    <a href="#how-it-works" onClick={() => setIsOpen(false)} className="text-zinc-600 dark:text-zinc-300 py-2 border-b border-zinc-100 dark:border-zinc-800">How it Works</a>
+                    <a href="#faq" onClick={() => setIsOpen(false)} className="text-zinc-600 dark:text-zinc-300 py-2 border-b border-zinc-100 dark:border-zinc-800">FAQ</a>
+                    <button className="w-full bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white px-4 py-2.5 rounded-lg font-heading font-semibold mt-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]">
+                        Try Free
+                    </button>
+                </div>
+            </div>
+        </nav>
+    );
+};
+
+// 2. Hero Section
+const Hero = () => {
+    return (
+        <section className="relative overflow-hidden pt-24 pb-16 md:pt-32 md:pb-24 grid-pattern noise-overlay">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] opacity-30 dark:opacity-20 pointer-events-none">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-indigo-400 blur-[100px] rounded-full mix-blend-multiply dark:mix-blend-screen" />
+            </div>
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+                <Reveal delay={0}>
+                    <div className="inline-flex items-center rounded-full border border-purple-200 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/10 px-4 py-1.5 text-sm font-mono text-purple-700 dark:text-purple-400 mb-8 shadow-sm">
+                        <span className="mr-2 text-xs">▶</span> Currently in Beta · Free to Try
+                    </div>
+                </Reveal>
+
+                <Reveal delay={100}>
+                    <h1 className="text-5xl md:text-7xl font-heading font-bold tracking-tighter text-[#18181B] dark:text-[#FAFAF9] mb-4 leading-[1.1]">
+                        AI writes your code. <br className="hidden md:block" />
+                        <span className="font-accent italic text-[#7C3AED] font-normal tracking-normal">
+                            We scan it for security holes.
+                        </span>
+                    </h1>
+                </Reveal>
+
+                <Reveal delay={200}>
+                    <p className="mt-6 text-lg md:text-xl font-body text-zinc-600 dark:text-zinc-400 max-w-3xl mx-auto leading-relaxed">
+                        The first security scanner built specifically for code generated by ChatGPT, Copilot, Cursor, and other AI tools. Catch logic flaws and OWASP Top 10 issues before you commit.
+                    </p>
+                </Reveal>
+
+                {/* FIX #9: Simplify Hero CTA section */}
+                <Reveal delay={300}>
+                    <div className="mt-10 flex flex-col items-center justify-center space-y-4">
+                        <button onClick={() => document.getElementById('beta-signup')?.scrollIntoView({ behavior: 'smooth' })} className="bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white px-10 py-4 rounded-lg font-heading font-semibold text-lg transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/25 flex items-center justify-center btn-ripple group">
+                            <span className="flex items-center">Get Early Access <Icons.ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" /></span>
+                        </button>
+                        <a href="#demo" onClick={(e) => { e.preventDefault(); document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-body text-zinc-500 hover:text-[#7C3AED] transition-colors">
+                            or watch the 30-second demo →
+                        </a>
+                    </div>
+                </Reveal>
+
+                {/* FIX #1: Remove fake "scans this week" stat */}
+                <Reveal delay={400}>
+                    <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm text-zinc-500 dark:text-zinc-400 font-mono">
+                        <div><span className="text-[#7C3AED] mr-2">•</span>Powered by Semgrep + Llama 3.1</div>
+                        <div className="hidden sm:block opacity-30">|</div>
+                        <div><span className="text-[#7C3AED] mr-2">•</span>Zero data retention</div>
+                        <div className="hidden sm:block opacity-30">|</div>
+                        <div><span className="text-[#7C3AED] mr-2">•</span>Open Source</div>
+                    </div>
+                </Reveal>
+
+                <Reveal delay={600} className="mt-16 mx-auto max-w-5xl">
+                    {/* FIX #12: Removed .card-hover from Hero dashboard mockup */}
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#18181B] shadow-2xl overflow-hidden aspect-video relative flex flex-col hover:border-[#7C3AED]/50 transition-colors duration-300">
+                        <div className="h-12 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-[#09090B] flex items-center px-4 gap-2">
+                            <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                            <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+                            <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
+                            <div className="mx-auto text-xs text-zinc-400 font-mono">dashboard.kavach.dev</div>
+                        </div>
+                        <div className="flex-1 flex">
+                            <div className="w-64 border-r border-zinc-100 dark:border-zinc-800 p-4 hidden md:block">
+                                <div className="h-8 bg-zinc-100 dark:bg-zinc-800/50 rounded mb-4 w-3/4"></div>
+                                <div className="space-y-3">
+                                    {[...Array(5)].map((_, i) => (
+                                        <div key={i} className="h-6 bg-zinc-50 dark:bg-[#09090B] rounded w-full"></div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="flex-1 p-8">
+                                <div className="flex justify-between items-end mb-8">
+                                    <div>
+                                        <div className="h-6 w-48 bg-zinc-200 dark:bg-zinc-800 rounded mb-2"></div>
+                                        <div className="h-4 w-32 bg-zinc-100 dark:bg-zinc-900 rounded"></div>
+                                    </div>
+                                    <div className="w-24 h-24 rounded-full border-8 border-[#34D399] flex items-center justify-center">
+                                        <span className="text-2xl font-heading font-bold text-[#34D399]">A</span>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-4 mb-8">
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="h-24 bg-zinc-50 dark:bg-[#09090B] border border-zinc-100 dark:border-zinc-800 rounded-xl p-4">
+                                            <div className="h-4 w-1/2 bg-zinc-200 dark:bg-zinc-800 rounded mb-4"></div>
+                                            <div className="h-8 w-1/3 bg-zinc-300 dark:bg-zinc-700 rounded"></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Reveal>
+            </div>
+        </section>
+    );
+};
+
+// 3. Product Preview Section
+const ProductPreview = () => {
+    const [activeTab, setActiveTab] = useState('dashboard');
+
+    return (
+        <section className="py-24 bg-[#FAFAF9] dark:bg-[#09090B]">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#18181B] dark:text-[#FAFAF9]">See what you'll get</h2>
+                    <p className="mt-4 text-lg font-body text-zinc-600 dark:text-zinc-400">
+                        A quick look at the KAVACH interface
+                    </p>
+                </div>
+
+                <div className="flex justify-center gap-2 mb-8 flex-wrap">
+                    {['dashboard', 'scan results', 'fix suggestions'].map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`px-6 py-2.5 rounded-lg font-heading font-medium capitalize transition-all text-sm ${activeTab === tab
+                                    ? 'bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white shadow-md shadow-purple-500/20'
+                                    : 'bg-white dark:bg-[#18181B] text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900'
+                                }`}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="bg-white dark:bg-[#18181B] rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden min-h-[400px] flex items-center justify-center p-8 unique-card">
+                    <div className="text-center">
+                        <Icons.Search className="w-16 h-16 text-zinc-300 dark:text-zinc-800 mx-auto mb-4" />
+                        <h3 className="text-xl font-heading font-semibold text-zinc-700 dark:text-zinc-300 capitalize">{activeTab} View</h3>
+                        <p className="text-zinc-500 font-body mt-2">Real product screenshots will be displayed here.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// 4. Auto-Playing Live Demo
+const AutoDemo = () => {
+    const [scanState, setScanState] = useState('idle');
+    const [score, setScore] = useState(100);
+    const sectionRef = useRef(null);
+
+    useEffect(() => {
+        let timeoutIds = [];
+        let isSubscribed = true;
+        let scoreInterval = null;
+
+        const animateScore = (start, end, duration) => {
+            let current = start;
+            const stepTime = Math.abs(Math.floor(duration / (end - start)));
+            clearInterval(scoreInterval);
+
+            scoreInterval = setInterval(() => {
+                if (!isSubscribed) return clearInterval(scoreInterval);
+                current += (start < end ? 1 : -1);
+                setScore(current);
+                if (current === end) clearInterval(scoreInterval);
+            }, stepTime);
+        };
+
+        const runCycle = () => {
+            if (!isSubscribed) return;
+            setScanState('idle');
+            setScore(100);
+
+            timeoutIds.push(setTimeout(() => {
+                if (!isSubscribed) return;
+                setScanState('scanning');
+            }, 2000));
+
+            timeoutIds.push(setTimeout(() => {
+                if (!isSubscribed) return;
+                setScanState('found');
+                animateScore(100, 68, 2000);
+            }, 5000));
+
+            timeoutIds.push(setTimeout(() => {
+                if (!isSubscribed) return;
+                setScanState('fix_ready');
+            }, 8000));
+
+            timeoutIds.push(setTimeout(() => {
+                if (!isSubscribed) return;
+                setScanState('fixed');
+                animateScore(68, 100, 1500);
+            }, 9000));
+        };
+
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) {
+                runCycle();
+                const loop = setInterval(runCycle, 15000);
+                timeoutIds.push(loop);
+            } else {
+                timeoutIds.forEach(clearTimeout);
+                clearInterval(scoreInterval);
+            }
+        }, { threshold: 0.3 });
+
+        if (sectionRef.current) observer.observe(sectionRef.current);
+
+        return () => {
+            isSubscribed = false;
+            observer.disconnect();
+            timeoutIds.forEach(clearTimeout);
+            clearInterval(scoreInterval);
+        };
+    }, []);
+
+    const vulnerableCode = `import os
+from flask import Flask, request
+app = Flask(__name__)
+
+@app.route('/read_file')
+def read_file():
+    filename = request.args.get('file')
+    # 🚨 DANGER: Path Traversal
+    file_path = os.path.join('/var/www/data', filename)
+    
+    with open(file_path, 'r') as f:
+        return f.read()`;
+
+    const secureCode = `import os
+from flask import Flask, request, abort
+app = Flask(__name__)
+
+@app.route('/read_file')
+def read_file():
+    filename = request.args.get('file')
+    # ✅ FIXED: Validate filename
+    if not filename or '/' in filename or '..' in filename:
+        abort(400)
+        
+    file_path = os.path.join('/var/www/data', filename)
+    with open(file_path, 'r') as f:
+        return f.read()`;
+
+    return (
+        <section ref={sectionRef} className="py-24 bg-white dark:bg-[#09090B]" id="demo">
+            <SectionDivider />
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#18181B] dark:text-[#FAFAF9] tracking-tight">Auto-Scanning in Action</h2>
+                    <p className="mt-4 text-lg font-body text-zinc-600 dark:text-zinc-400">See how KAVACH catches and fixes issues automatically.</p>
+                </div>
+
+                <div className="flex flex-col gap-8 max-w-4xl mx-auto">
+                    {/* Editor Top Side - FIX #12: KEEP .card-hover */}
+                    <div className="rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-xl bg-[#18181B] flex flex-col h-[400px] card-hover">
+                        <div className="bg-[#09090B] px-4 py-3 flex items-center border-b border-zinc-800">
+                            <div className="flex space-x-2">
+                                <div className="w-3 h-3 rounded-full bg-red-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"></div>
+                                <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"></div>
+                                <div className="w-3 h-3 rounded-full bg-green-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"></div>
+                            </div>
+                            <div className="mx-auto flex items-center text-xs font-mono text-zinc-400">
+                                <span className="text-zinc-600">~/projects/api/</span>app.py
+                            </div>
+                        </div>
+
+                        <div className="relative font-mono text-sm overflow-hidden flex-1 flex">
+                            <div className="w-10 bg-[#09090B]/50 border-r border-zinc-800/50 py-6 text-right pr-3 select-none text-zinc-600 text-xs">
+                                {Array.from({ length: 12 }).map((_, i) => <div key={i} className="h-[21px]">{i + 1}</div>)}
+                            </div>
+                            <div className="relative p-6 flex-1 overflow-hidden">
+                                <pre className="text-zinc-300 leading-[21px] transition-all duration-500">
+                                    <code dangerouslySetInnerHTML={{
+                                        __html: scanState === 'fixed'
+                                            ? secureCode.replace(/if not filename.*/g, '<span class="text-[#34D399]">if not filename or \'/\' in filename or \'..\' in filename:\n        abort(400)</span>').replace('# ✅ FIXED: Validate filename', '<span class="text-[#34D399]"># ✅ FIXED: Validate filename</span>')
+                                            : vulnerableCode.replace('os.path.join(\'/var/www/data\', filename)', '<span class="wavy-underline text-[#F87171]">os.path.join(\'/var/www/data\', filename)</span>').replace('# 🚨 DANGER: Path Traversal', '<span class="text-[#F87171]"># 🚨 DANGER: Path Traversal</span>')
+                                    }} />
+                                </pre>
+
+                                {scanState === 'scanning' && (
+                                    <div className="absolute left-0 right-0 h-full top-0 bg-gradient-to-b from-transparent via-[#7C3AED]/20 to-transparent border-b-2 border-[#7C3AED] z-10 scan-infinite-animation" />
+                                )}
+
+                                {(scanState === 'found' || scanState === 'fix_ready') && (
+                                    <div className="absolute top-[140px] left-2 right-4 h-12 bg-[#F87171]/10 border border-[#F87171]/50 rounded pointer-events-none fade-in-animation" />
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Report Bottom Side - FIX #12: KEEP .card-hover */}
+                    <div className="flex flex-col space-y-6">
+                        <div className="bg-white dark:bg-[#18181B] rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-lg relative overflow-hidden h-[400px] flex flex-col unique-card card-hover">
+                            <div className="flex justify-between items-center mb-8 pb-6 border-b border-zinc-100 dark:border-zinc-800">
+                                <div>
+                                    <h3 className="font-heading font-semibold text-zinc-800 dark:text-white text-lg">Analysis Report</h3>
+                                    <p className="font-body text-sm text-zinc-500 dark:text-zinc-400">app.py</p>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-xs font-mono font-medium text-zinc-500 tracking-wider mb-1">HEALTH_SCORE</div>
+                                    <div className={`text-4xl font-mono font-bold ${score === 100 ? 'text-[#34D399]' : score > 80 ? 'text-[#FBBF24]' : 'text-[#F87171]'} transition-colors duration-300`}>
+                                        {score}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 flex flex-col justify-center">
+                                {scanState === 'idle' && (
+                                    <div className="text-center text-zinc-500 fade-in-animation">
+                                        <Icons.Code2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                        <p className="font-mono text-sm">Waiting for code changes...</p>
+                                    </div>
+                                )}
+
+                                {scanState === 'scanning' && (
+                                    <div className="text-center fade-in-animation">
+                                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#7C3AED] mx-auto mb-4"></div>
+                                        <p className="font-mono text-sm font-medium text-zinc-600 dark:text-zinc-300">Analyzing AI-generated logic...</p>
+                                    </div>
+                                )}
+
+                                {(scanState === 'found' || scanState === 'fix_ready') && (
+                                    <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl p-5 slide-up-animation">
+                                        <div className="flex items-start">
+                                            <Icons.AlertTriangle className="h-6 w-6 text-[#F87171] mt-0.5 mr-3 flex-shrink-0" />
+                                            <div>
+                                                <h4 className="font-heading font-semibold text-red-900 dark:text-red-300 text-lg">Path Traversal Risk</h4>
+                                                <p className="font-body text-sm text-red-700 dark:text-red-400 mt-2 mb-4 leading-relaxed">
+                                                    Unsanitized user input <code className="font-mono">filename</code> allows attackers to read arbitrary files on the server.
+                                                </p>
+                                                {scanState === 'fix_ready' ? (
+                                                    <button className="bg-[#F87171] text-white text-sm px-4 py-2 rounded-lg font-heading font-semibold shadow-sm w-full animate-pulse">
+                                                        Applying AI Fix...
+                                                    </button>
+                                                ) : (
+                                                    // FIX #8: Replace empty placeholder div with waiting button
+                                                    <button
+                                                        className="h-9 w-full bg-red-500/10 border border-red-500/30 text-red-400 font-heading text-sm opacity-70 animate-pulse rounded-lg"
+                                                        style={{ animationDuration: '3s' }}
+                                                    >
+                                                        ⏳ Waiting to apply fix...
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {scanState === 'fixed' && (
+                                    <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-900/30 rounded-xl p-5 flex items-start slide-up-animation">
+                                        <div className="bg-emerald-100 dark:bg-emerald-900/50 p-2 rounded-full mr-4 flex-shrink-0 relative">
+                                            <Icons.CheckCircle2 className="h-6 w-6 text-[#34D399]" />
+                                            <div className="absolute inset-0 bg-[#34D399] rounded-full animate-ping opacity-20"></div>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-heading font-semibold text-emerald-900 dark:text-emerald-300 text-lg">Code is Secure</h4>
+                                            <p className="font-body text-sm text-emerald-700 dark:text-emerald-400 mt-2">
+                                                Input validation added. Malicious file paths will now be rejected with a 400 Bad Request.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// 5. Why You Need This (Stats)
+const StatsSection = () => {
+    return (
+        <section className="py-24 bg-[#09090B] text-white relative grid-pattern border-y border-zinc-800">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight">Why AI code needs scanning</h2>
+                    <p className="mt-4 text-lg font-body text-zinc-400 max-w-2xl mx-auto">LLMs optimize for functionality, not security. Don't let generated code become a liability.</p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-zinc-800/50">
+                    <Reveal delay={0} className="py-8 md:py-0 md:px-8">
+                        <div className="text-7xl md:text-8xl font-accent italic text-[#7C3AED] mb-4 text-glow mx-auto max-w-fit">
+                            40%
+                            <div className="h-1 w-full bg-gradient-to-r from-transparent via-[#7C3AED] to-transparent mt-2 opacity-50"></div>
+                        </div>
+                        <p className="text-zinc-200 font-heading font-semibold mb-2 text-xl">More vulnerabilities</p>
+                        <p className="text-sm font-body text-zinc-400 leading-relaxed">in AI-generated code compared to human-written code (Stanford Research)</p>
+                    </Reveal>
+
+                    <Reveal delay={150} className="py-8 md:py-0 md:px-8">
+                        <div className="text-7xl md:text-8xl font-accent italic text-[#7C3AED] mb-4 text-glow mx-auto max-w-fit">
+                            $4.4<span className="text-5xl text-purple-400">M</span>
+                            <div className="h-1 w-full bg-gradient-to-r from-transparent via-[#7C3AED] to-transparent mt-2 opacity-50"></div>
+                        </div>
+                        <p className="text-zinc-200 font-heading font-semibold mb-2 text-xl">Average cost</p>
+                        <p className="text-sm font-body text-zinc-400 leading-relaxed">of a data breach caused by insecure application code (IBM 2023)</p>
+                    </Reveal>
+
+                    <Reveal delay={300} className="py-8 md:py-0 md:px-8">
+                        <div className="text-7xl md:text-8xl font-accent italic text-[#7C3AED] mb-4 text-glow mx-auto max-w-fit">
+                            70%
+                            <div className="h-1 w-full bg-gradient-to-r from-transparent via-[#7C3AED] to-transparent mt-2 opacity-50"></div>
+                        </div>
+                        <p className="text-zinc-200 font-heading font-semibold mb-2 text-xl">AI Apps</p>
+                        <p className="text-sm font-body text-zinc-400 leading-relaxed">contain at least one critical OWASP Top 10 vulnerability on day one.</p>
+                    </Reveal>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// 6. How It Works Section
+const HowItWorks = () => {
+    const steps = [
+        {
+            // FIX #13: Replaced emoji with Lucide icon
+            emoji: <Icons.Clipboard className="h-6 w-6 text-[#7C3AED]" />,
+            title: "Paste or Upload",
+            desc: "Connect your GitHub repo, paste snippets, or upload files directly into the dashboard.",
+            mock: (
+                <div className="mt-6 bg-zinc-50 dark:bg-[#09090B] rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 shadow-inner">
+                    <div className="border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-md p-6 text-center">
+                        <Icons.Code2 className="mx-auto h-6 w-6 text-zinc-400 mb-2" />
+                        <span className="text-xs font-mono text-zinc-500">Cmd+V to paste</span>
+                    </div>
+                </div>
+            )
+        },
+        {
+            // FIX #13: Replaced emoji with Lucide icon
+            emoji: <Icons.Search className="h-6 w-6 text-[#7C3AED]" />,
+            title: "Get Instant Analysis",
+            desc: "Our engine combines Semgrep static analysis with custom LLM evaluation models.",
+            mock: (
+                <div className="mt-6 bg-zinc-50 dark:bg-[#09090B] rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 shadow-inner">
+                    <div className="space-y-3">
+                        <div className="h-2 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] w-2/3 animate-pulse"></div>
+                        </div>
+                        <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
+                            <span>Scanning...</span>
+                            <span>67%</span>
+                        </div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            // FIX #13: Replaced emoji with Lucide icon
+            emoji: <Icons.Wrench className="h-6 w-6 text-[#7C3AED]" />,
+            title: "Apply Secure Fixes",
+            desc: "Review context-aware fix suggestions and apply them with a single click.",
+            mock: (
+                <div className="mt-6 bg-zinc-50 dark:bg-[#09090B] rounded-lg border border-[#34D399]/30 p-4 shadow-inner">
+                    <div className="flex items-center space-x-2 mb-2">
+                        <Icons.CheckCircle2 className="h-4 w-4 text-[#34D399]" />
+                        <span className="text-xs font-mono font-medium text-emerald-700 dark:text-[#34D399]">READY TO PATCH</span>
+                    </div>
+                    <button className="w-full bg-[#18181B] dark:bg-[#1A1A1A] text-white text-xs py-2 rounded font-heading font-medium border border-zinc-700 dark:border-zinc-800 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)]">
+                        Apply Secure Code
+                    </button>
+                </div>
+            )
+        }
+    ];
+
+    return (
+        <section className="py-24 bg-white dark:bg-[#09090B]" id="how-it-works">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#18181B] dark:text-[#FAFAF9]">Security in 3 simple steps</h2>
+                    <p className="mt-4 text-lg font-body text-zinc-600 dark:text-zinc-400">No complex integrations or lengthy setups required.</p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-8 relative">
+                    <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-zinc-200 dark:via-zinc-800 to-transparent z-0"></div>
+
+                    {steps.map((step, index) => (
+                        // FIX #12: Removed .card-hover and replaced with simple hover
+                        <Reveal key={index} delay={index * 200} className="bg-white dark:bg-[#18181B] rounded-2xl p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm relative z-10 unique-card hover:border-[#7C3AED]/50 transition-colors duration-300">
+                            <div className="w-12 h-12 bg-[#FAFAF9] dark:bg-[#09090B] border border-zinc-200 dark:border-zinc-800 rounded-2xl flex items-center justify-center text-2xl mb-6 mx-auto md:mx-0 shadow-inner">
+                                {step.emoji}
+                            </div>
+
+                            <h3 className="text-xl font-heading font-bold text-[#18181B] dark:text-[#FAFAF9] mb-3 text-center md:text-left">{step.title}</h3>
+                            <p className="font-body text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed text-center md:text-left min-h-[60px]">
+                                {step.desc}
+                            </p>
+
+                            {step.mock}
+                        </Reveal>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// 7. Features / What We Detect
+const FeaturesSection = () => {
+    const features = [
+        { icon: Icons.Bug, color: 'text-[#F87171]', bg: 'bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20', title: 'SQL Injection', desc: "Ensure database queries won't be hijacked by malicious inputs.", tag: '[CRITICAL]' },
+        { icon: Icons.Key, color: 'text-[#FBBF24]', bg: 'bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20', title: 'Hardcoded Secrets', desc: "Keep API keys, passwords, and tokens out of your source code.", tag: '[HIGH]' },
+        { icon: Icons.Zap, color: 'text-[#34D399]', bg: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20', title: 'XSS Attacks', desc: "Prevent cross-site scripting by validating and escaping output.", tag: '[HIGH]' },
+        { icon: Icons.ShieldOff, color: 'text-[#7C3AED]', bg: 'bg-purple-50 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20', title: 'Missing Validation', desc: "Verify that all incoming data is strictly typed and sanitized.", tag: '[MEDIUM]' },
+        { icon: Icons.Lock, color: 'text-[#60A5FA]', bg: 'bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20', title: 'Weak Auth', desc: "Detect flawed login logic and broken session management.", tag: '[CRITICAL]' },
+        { icon: Icons.FileWarning, color: 'text-[#A78BFA]', bg: 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20', title: 'Path Traversal', desc: "Block unauthorized access to server files and directories.", tag: '[HIGH]' },
+    ];
+
+    return (
+        <section className="py-24 bg-[#FAFAF9] dark:bg-[#09090B] border-y border-zinc-200 dark:border-zinc-800" id="features">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#18181B] dark:text-[#FAFAF9]">What KAVACH catches</h2>
+                    <p className="mt-4 text-lg font-body text-zinc-600 dark:text-zinc-400">
+                        Trained specifically on common mistakes made by AI coding assistants.
+                    </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {features.map((feat, idx) => (
+                        // FIX #12: Removed .card-hover and replaced with simple hover
+                        <Reveal key={idx} delay={idx * 100} className="bg-white dark:bg-[#18181B] p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-[#7C3AED]/50 transition-colors duration-300 group cursor-default unique-card relative overflow-hidden">
+                            <div className="flex justify-between items-start mb-5">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${feat.bg}`}>
+                                    <feat.icon className={`h-6 w-6 ${feat.color}`} />
+                                </div>
+                                <span className={`font-mono text-[10px] tracking-wider ${feat.color}`}>{feat.tag}</span>
+                            </div>
+                            <h3 className="font-heading font-semibold text-lg text-[#18181B] dark:text-[#FAFAF9] mb-2">{feat.title}</h3>
+                            <p className="font-body text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">{feat.desc}</p>
+
+                            {/* Corner Accent */}
+                            <div className={`absolute top-0 right-0 w-8 h-8 rounded-bl-3xl ${feat.bg} opacity-50`}></div>
+                        </Reveal>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// 8. Pricing (Hidden per FIX #4, but keeping the code intact without .card-hover)
+const Pricing = () => {
+    return (
+        <section className="py-24 bg-white dark:bg-[#09090B]" id="pricing">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#18181B] dark:text-[#FAFAF9]">Simple, honest pricing</h2>
+                    <p className="mt-4 text-lg font-body text-zinc-600 dark:text-zinc-400">Start free. Upgrade when you need more.</p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                    {/* Free Plan */}
+                    {/* FIX #12: Removed .card-hover and replaced with simple hover */}
+                    <div className="bg-white dark:bg-[#18181B] rounded-3xl p-8 border-2 border-zinc-200 dark:border-zinc-800 hover:border-[#7C3AED]/50 transition-colors duration-300 flex flex-col unique-card">
+                        <h3 className="text-xl font-heading font-semibold text-[#18181B] dark:text-[#FAFAF9]">Free</h3>
+                        <div className="mt-4 flex items-baseline text-5xl font-mono font-bold text-[#18181B] dark:text-white">
+                            $0<span className="ml-1 text-xl font-body font-medium text-zinc-500">/mo</span>
+                        </div>
+                        <ul className="mt-8 space-y-4 flex-1 font-body">
+                            {['10 scans/month', 'Basic AI analysis', 'Web dashboard', 'Community support'].map((item, i) => (
+                                <li key={i} className="flex items-center text-zinc-600 dark:text-zinc-300">
+                                    <Icons.Check className="h-5 w-5 text-[#34D399] mr-3" /> {item}
+                                </li>
+                            ))}
+                        </ul>
+                        <button className="mt-8 w-full bg-[#FAFAF9] dark:bg-[#27272A] hover:bg-zinc-200 dark:hover:bg-zinc-700 text-[#18181B] dark:text-white px-4 py-3 rounded-lg font-heading font-semibold transition-colors btn-ripple border border-zinc-200 dark:border-zinc-600">
+                            Get Started Free
+                        </button>
+                    </div>
+
+                    {/* Pro Plan */}
+                    <div className="bg-white dark:bg-[#18181B] rounded-3xl p-8 border-2 border-[#7C3AED] shadow-2xl shadow-purple-500/20 relative flex flex-col transform md:-translate-y-4 unique-card animate-glow">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white px-4 py-1 rounded-full text-xs font-heading font-bold tracking-wide uppercase shadow-lg">
+                            Most Popular
+                        </div>
+                        <h3 className="text-xl font-heading font-semibold text-[#18181B] dark:text-[#FAFAF9]">Pro</h3>
+                        <div className="mt-4 flex items-baseline text-5xl font-mono font-bold text-[#18181B] dark:text-white">
+                            $19<span className="ml-1 text-xl font-body font-medium text-zinc-500">/mo</span>
+                        </div>
+                        <ul className="mt-8 space-y-4 flex-1 font-body">
+                            {['100 scans/month', 'Advanced AI (Llama 3.1)', 'PDF reports', 'GitHub integration', 'Auto-fix suggestions', 'Priority queue'].map((item, i) => (
+                                <li key={i} className="flex items-center text-zinc-600 dark:text-zinc-300">
+                                    <Icons.Check className="h-5 w-5 text-[#34D399] mr-3" /> {item}
+                                </li>
+                            ))}
+                        </ul>
+                        <button className="mt-8 w-full bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white px-4 py-3 rounded-lg font-heading font-semibold transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] hover:scale-[1.02] btn-ripple">
+                            Start Free Trial
+                        </button>
+                    </div>
+
+                    {/* Team Plan */}
+                    {/* FIX #12: Removed .card-hover and replaced with simple hover */}
+                    <div className="bg-white dark:bg-[#18181B] rounded-3xl p-8 border-2 border-zinc-200 dark:border-zinc-800 hover:border-[#7C3AED]/50 transition-colors duration-300 flex flex-col unique-card">
+                        <h3 className="text-xl font-heading font-semibold text-[#18181B] dark:text-[#FAFAF9]">Team</h3>
+                        <div className="mt-4 flex items-baseline text-5xl font-mono font-bold text-[#18181B] dark:text-white">
+                            $49<span className="ml-1 text-xl font-body font-medium text-zinc-500">/mo</span>
+                        </div>
+                        <ul className="mt-8 space-y-4 flex-1 font-body">
+                            {['Unlimited scans', 'Everything in Pro', 'Team collaboration', 'CI/CD integration', 'Compliance reports', 'Priority support'].map((item, i) => (
+                                <li key={i} className="flex items-center text-zinc-600 dark:text-zinc-300">
+                                    <Icons.Check className="h-5 w-5 text-[#34D399] mr-3" /> {item}
+                                </li>
+                            ))}
+                        </ul>
+                        <button className="mt-8 w-full bg-[#FAFAF9] dark:bg-[#27272A] hover:bg-zinc-200 dark:hover:bg-zinc-700 text-[#18181B] dark:text-white px-4 py-3 rounded-lg font-heading font-semibold transition-colors btn-ripple border border-zinc-200 dark:border-zinc-600">
+                            Contact Us
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// 9. FAQ Section (NEW)
+const FAQ = () => {
+    const faqs = [
+        {
+            q: "Is my code safe? Do you store it?",
+            a: "Your code is scanned in memory and immediately deleted after analysis. We never permanently store your source code. Scan results are kept in your account for 30 days."
+        },
+        {
+            q: "How accurate is the AI analysis?",
+            a: "KAVACH combines multiple layers: Semgrep for static pattern matching, Gitleaks for secret detection, and Llama 3.1 for AI-powered logic analysis. This multi-layer approach significantly reduces false positives compared to any single tool."
+        },
+        {
+            q: "What programming languages are supported?",
+            a: "Currently: JavaScript, TypeScript, Python, PHP, Java, Go, Ruby, Rust, C, C++, and C#. Framework-specific rules for React, Next.js, Django, Flask, Express, and more."
+        },
+        {
+            q: "How is this different from Snyk or SonarQube?",
+            a: "Traditional tools require complex setup and target enterprise teams. KAVACH is built specifically for individual developers using AI coding tools - no CI/CD setup, no complex config, just paste and scan."
+        },
+        {
+            q: "When will the paid plans be available?",
+            a: "KAVACH is currently 100% free during our beta. Pro plans launching in Q2 2025 with advanced AI, PDF reports, and team features."
+        }
+    ];
+
+    return (
+        <section className="py-24 bg-[#FAFAF9] dark:bg-[#09090B] border-t border-zinc-200 dark:border-zinc-800" id="faq">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 className="text-3xl md:text-4xl font-heading font-bold text-center mb-12 text-[#18181B] dark:text-[#FAFAF9]">
+                    Frequently asked questions
+                </h2>
+                <div className="space-y-4">
+                    {faqs.map((faq, i) => (
+                        <details
+                            key={i}
+                            className="group bg-white dark:bg-[#18181B] rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 cursor-pointer hover:border-[#7C3AED]/50 transition-colors open:border-l-4 open:border-l-[#7C3AED]"
+                        >
+                            <summary className="flex justify-between items-center font-heading font-semibold text-[#18181B] dark:text-[#FAFAF9] list-none">
+                                <span className="flex items-center">
+                                    <span className="font-accent italic text-[#7C3AED] mr-3 text-xl">?</span>
+                                    {faq.q}
+                                </span>
+                                <span className="text-xl text-zinc-400 group-open:rotate-180 transition-transform duration-300">▼</span>
+                            </summary>
+                            <p className="mt-4 font-body text-zinc-600 dark:text-zinc-400 leading-loose ml-7">
+                                {faq.a}
+                            </p>
+                        </details>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// 10. Beta Signup CTA
+const BetaSignup = () => {
+    const [email, setEmail] = useState('');
+    const [submitted, setSubmitted] = useState(false);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (email) setSubmitted(true);
+    };
+
+    return (
+        // FIX #9: Added id="beta-signup" to ensure scrolling from Hero works
+        <section id="beta-signup" className="py-24 bg-gradient-to-br from-purple-50 to-zinc-50 dark:from-purple-900/10 dark:to-zinc-900/10 border-t border-zinc-200 dark:border-zinc-800 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+
+            <div className="max-w-2xl mx-auto px-4 text-center relative z-10">
+                <div className="inline-block bg-purple-100 dark:bg-[#7C3AED]/20 text-purple-700 dark:text-purple-300 px-4 py-1.5 rounded-full text-sm font-heading font-semibold mb-6 border border-purple-200 dark:border-purple-500/30">
+                    🚀 Currently in Private Beta
+                </div>
+
+                <h2 className="text-4xl md:text-5xl font-heading font-bold text-[#18181B] dark:text-[#FAFAF9] tracking-tight mb-4">
+                    Get early access to KAVACH
+                </h2>
+                <p className="text-lg font-body text-zinc-600 dark:text-zinc-400 mb-10">
+                    Join the waitlist. We'll email you when your invite is ready.
+                </p>
+
+                {!submitted ? (
+                    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                            placeholder="your@email.com"
+                            required
+                            className="flex-1 px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-[#09090B] text-[#18181B] dark:text-white font-body focus:ring-2 focus:ring-[#7C3AED] focus:border-transparent outline-none transition-shadow shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-none"
+                        />
+                        <button
+                            type="submit"
+                            className="bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white px-6 py-3 rounded-xl font-heading font-semibold transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/25 whitespace-nowrap btn-ripple"
+                        >
+                            Get Access
+                        </button>
+                    </form>
+                ) : (
+                    <div className="bg-emerald-100 dark:bg-[#34D399]/20 text-emerald-800 dark:text-[#34D399] px-6 py-4 rounded-xl inline-block border border-emerald-200 dark:border-[#34D399]/30 font-heading font-medium">
+                        ✅ You're on the list! We'll email you soon.
+                    </div>
+                )}
+
+                {/* FIX #5: Remove "500+ developers" fake claim */}
+                <p className="mt-6 text-sm font-mono text-zinc-500">
+                    No spam · Unsubscribe anytime · Priority access for early signups
+                </p>
+            </div>
+        </section>
+    );
+};
+
+// 11. Footer
+const Footer = () => {
+    return (
+        <footer className="bg-white dark:bg-[#09090B] border-t border-zinc-200 dark:border-zinc-800 pt-16 pb-8 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#7C3AED] to-transparent opacity-20"></div>
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div className="grid md:grid-cols-4 gap-8 mb-12">
+                    <div className="md:col-span-1">
+                        <div className="flex items-center space-x-2 mb-4">
+                            <div className="p-1 rounded-md">
+                                <Icons.KavachLogo className="h-6 w-6" />
+                            </div>
+                            <span className="font-heading font-bold text-lg text-[#18181B] dark:text-[#FAFAF9]">KAVACH</span>
+                        </div>
+                        <p className="font-body text-sm text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed">
+                            AI code security for modern development teams. Ship fast, stay safe.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h4 className="font-heading font-semibold text-[#18181B] dark:text-[#FAFAF9] mb-4">Product</h4>
+                        <ul className="space-y-2 font-mono text-sm text-zinc-600 dark:text-zinc-400">
+                            <li><a href="#features" className="hover:text-[#7C3AED] transition-colors">Features</a></li>
+                            {/* FIX #4: Removed Pricing link from footer */}
+                            <li><a href="#" className="hover:text-[#7C3AED] transition-colors">Changelog</a></li>
+                            <li><a href="#" className="hover:text-[#7C3AED] transition-colors">Integrations</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 className="font-heading font-semibold text-[#18181B] dark:text-[#FAFAF9] mb-4">Resources</h4>
+                        <ul className="space-y-2 font-mono text-sm text-zinc-600 dark:text-zinc-400">
+                            <li><a href="#" className="hover:text-[#7C3AED] transition-colors">Documentation</a></li>
+                            <li><a href="#" className="hover:text-[#7C3AED] transition-colors">Security Blog</a></li>
+                            <li><a href="#faq" className="hover:text-[#7C3AED] transition-colors">FAQ</a></li>
+                            <li><a href="#" className="hover:text-[#7C3AED] transition-colors">API Reference</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 className="font-heading font-semibold text-[#18181B] dark:text-[#FAFAF9] mb-4">Connect</h4>
+                        <div className="flex space-x-4 mb-4">
+                            <a href="#" className="text-zinc-400 hover:text-[#18181B] dark:hover:text-white transition-colors"><Icons.Github className="h-5 w-5" /></a>
+                            <a href="#" className="text-zinc-400 hover:text-[#18181B] dark:hover:text-white transition-colors">
+                                <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                            </a>
+                        </div>
+                        {/* FIX #11: Update footer tagline */}
+                        <p className="font-body text-sm text-zinc-500">Made with ❤️ for indie hackers.</p>
+                    </div>
+                </div>
+
+                {/* HUGE WORDMARK */}
+                <div className="w-full text-center overflow-hidden mb-8 mt-12 opacity-5 dark:opacity-10 pointer-events-none select-none">
+                    <h1 className="text-[15vw] leading-none font-accent italic font-bold tracking-tighter text-[#18181B] dark:text-[#FAFAF9] m-0 p-0">KAVACH</h1>
+                </div>
+
+                <div className="border-t border-zinc-200 dark:border-zinc-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm font-mono text-zinc-500">
+                    <p>© {new Date().getFullYear()} KAVACH Security Inc. All rights reserved.</p>
+                    <div className="flex space-x-6 mt-4 md:mt-0">
+                        <a href="#" className="hover:text-zinc-800 dark:hover:text-zinc-300 transition-colors">Privacy Policy</a>
+                        <a href="#" className="hover:text-zinc-800 dark:hover:text-zinc-300 transition-colors">Terms of Service</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    );
+};
+
+// MAIN APP COMPONENT
+export default function App() {
+    const [isDark, setIsDark] = useState(false);
+    const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 });
+    const [showCursor, setShowCursor] = useState(false);
+
+    // FIX #15: Add proper metadata / SEO tags dynamically
+    useEffect(() => {
+        document.title = "KAVACH — AI Code Security Scanner";
+
+        const setMetaTag = (name, content, attribute = 'name') => {
+            let element = document.querySelector(`meta[${attribute}="${name}"]`);
+            if (!element) {
+                element = document.createElement('meta');
+                element.setAttribute(attribute, name);
+                document.head.appendChild(element);
+            }
+            element.setAttribute('content', content);
+        };
+
+        setMetaTag('description', 'Find security vulnerabilities in code generated by ChatGPT, Copilot, and Cursor before you ship. OWASP Top 10 detection, powered by Semgrep + Llama 3.1.');
+        setMetaTag('keywords', 'AI code security, ChatGPT security, Copilot security scanner, OWASP, code vulnerabilities, static analysis');
+        setMetaTag('viewport', 'width=device-width, initial-scale=1');
+
+        setMetaTag('og:title', 'KAVACH — AI Code Security Scanner', 'property');
+        setMetaTag('og:description', 'Find security vulnerabilities in code generated by ChatGPT, Copilot, and Cursor before you ship. OWASP Top 10 detection, powered by Semgrep + Llama 3.1.', 'property');
+        setMetaTag('og:type', 'website', 'property');
+        setMetaTag('og:image', '/og-image.png', 'property');
+
+        setMetaTag('twitter:card', 'summary_large_image');
+        setMetaTag('twitter:title', 'KAVACH — AI Code Security Scanner');
+        setMetaTag('twitter:description', 'Find security vulnerabilities in code generated by ChatGPT, Copilot, and Cursor before you ship. OWASP Top 10 detection, powered by Semgrep + Llama 3.1.');
+    }, []);
+
+    // Fixing Dark Mode with LocalStorage and Document Element class
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            setIsDark(true);
+            document.documentElement.classList.add('dark');
+        } else {
+            setIsDark(false);
+            document.documentElement.classList.remove('dark');
+        }
+    }, []);
+
+    const toggleTheme = () => {
+        const nextTheme = !isDark;
+        setIsDark(nextTheme);
+        if (nextTheme) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    };
+
+    // FIX #7: Disable custom cursor glow on mobile/tablet/touch
+    useEffect(() => {
+        const checkCursorVisibility = () => {
+            const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            const isLandscape = window.matchMedia('(orientation: landscape)').matches;
+            const isDesktop = window.innerWidth >= 1024;
+            setShowCursor(isDesktop && !isTouch && isLandscape);
+        };
+
+        checkCursorVisibility();
+        window.addEventListener('resize', checkCursorVisibility);
+        window.addEventListener('orientationchange', checkCursorVisibility);
+
+        return () => {
+            window.removeEventListener('resize', checkCursorVisibility);
+            window.removeEventListener('orientationchange', checkCursorVisibility);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!showCursor) return;
+        const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
+    }, [showCursor]);
+
+    return (
+        <>
+            {/* INJECTED CUSTOM FONTS & CSS STYLES */}
+            <style dangerouslySetInnerHTML={{
+                __html: `
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif:italic&display=swap');
+        
+        .font-heading { font-family: 'Space Grotesk', sans-serif; }
+        .font-body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-accent { font-family: 'Instrument Serif', serif; }
+
+        /* Dark Mode Transitions */
+        html { transition: background-color 0.3s ease, color 0.3s ease; }
+        
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        
+        /* Squiggly underline for vulnerabilities */
+        .wavy-underline {
+          text-decoration: underline wavy #F87171 2px;
+          text-underline-offset: 3px;
+        }
+
+        /* Unique Cards */
+        .unique-card {
+           background-image: linear-gradient(to bottom, transparent, rgba(124, 58, 237, 0.02));
+        }
+        
+        /* Background Grid */
+        .grid-pattern {
+          background-image: radial-gradient(circle, rgba(161, 161, 170, 0.2) 1px, transparent 1px);
+          background-size: 24px 24px;
+        }
+        .dark .grid-pattern {
+          background-image: radial-gradient(circle, rgba(63, 63, 70, 0.3) 1px, transparent 1px);
+        }
+
+        /* Noise Overlay */
+        .noise-overlay::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E");
+          opacity: 0.03;
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        /* Custom Cursor */
+        .cursor-glow {
+          position: fixed;
+          width: 300px;
+          height: 300px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+          pointer-events: none;
+          transform: translate(-50%, -50%);
+          transition: transform 0.1s ease-out;
+          z-index: 9999;
+          mix-blend-mode: screen;
+        }
+        .light .cursor-glow {
+          background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
+          mix-blend-mode: multiply;
+        }
+
+        /* Animations */
+        @keyframes scanInfinite {
+          0% { top: -100%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        .scan-infinite-animation { animation: scanInfinite 2s linear infinite; }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .fade-in-animation { animation: fadeIn 0.4s ease-in forwards; }
+        
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-up-animation { animation: slideUp 0.4s ease-out forwards; }
+        
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        
+        @keyframes glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.2); }
+          50% { box-shadow: 0 0 40px rgba(124, 58, 237, 0.5); }
+        }
+        .animate-glow { animation: glow 3s ease-in-out infinite; }
+        
+        /* Interactions */
+        .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; }
+        .card-hover:hover { transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) scale(1.01); }
+        
+        .btn-ripple { position: relative; overflow: hidden; }
+        .btn-ripple::after {
+          content: ""; display: block; position: absolute; width: 100%; height: 100%;
+          top: 0; left: 0; pointer-events: none;
+          background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+          background-repeat: no-repeat; background-position: 50%;
+          transform: scale(10, 10); opacity: 0; transition: transform .5s, opacity 1s;
+        }
+        .btn-ripple:active::after { transform: scale(0, 0); opacity: .2; transition: 0s; }
+        
+        .text-glow { text-shadow: 0 0 40px rgba(124, 58, 237, 0.3); }
+      `}} />
+
+            <div className={`${isDark ? 'dark' : 'light'} min-h-screen bg-[#FAFAF9] dark:bg-[#09090B] text-[#18181B] dark:text-[#FAFAF9] transition-colors duration-300 font-body selection:bg-[#7C3AED]/30`}>
+                {/* Custom Interactive Cursor */}
+                {/* FIX #7: Only render when conditions are met */}
+                {showCursor && (
+                    <div className="cursor-glow hidden lg:block" style={{ left: mousePos.x, top: mousePos.y }} />
+                )}
+
+                <Navbar isDark={isDark} toggleTheme={toggleTheme} />
+                <main>
+                    <Hero />
+                    {/* FIX #3: Hidden until we have real screenshots — enable in v1.1 */}
+                    {/* <ProductPreview /> */}
+                    <AutoDemo />
+                    <StatsSection />
+                    <HowItWorks />
+                    <FeaturesSection />
+                    {/* FIX #4: Hidden — pricing launches Q2 2025 */}
+                    {/* <Pricing /> */}
+                    <FAQ />
+                    <BetaSignup />
+                </main>
+                <Footer />
+            </div>
+        </>
+    );
+}
+

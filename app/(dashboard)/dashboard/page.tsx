@@ -1,31 +1,45 @@
 'use client'
 
 import { useUser } from '@/hooks/useUser'
-import { signOut } from '@/lib/auth'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { Shield } from 'lucide-react'
 
 export default function DashboardPage() {
   const { user, loading } = useUser()
 
   if (loading) {
-    return <div className="p-8 min-h-screen bg-[#0a0a0a] text-white">Loading...</div>
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <LoadingSpinner size="lg" text="Loading your dashboard..." />
+      </div>
+    )
   }
 
+  const firstName = user?.name?.split(' ')[0] || 'there'
+
   return (
-    <div className="p-8 min-h-screen bg-[#0a0a0a] text-white">
-      <h1 className="text-2xl font-bold mb-4">Welcome to KAVACH Dashboard</h1>
-      
-      {user && (
-        <p className="mb-6 text-gray-400">
-          Logged in as: {user.email}
+    <div className="space-y-8">
+      {/* Welcome Header */}
+      <div>
+        <h1 className="font-heading font-bold text-3xl md:text-4xl text-white tracking-tight">
+          Welcome back, <span className="font-accent italic text-[#7C3AED] font-normal">{firstName}</span>
+        </h1>
+        <p className="font-body text-zinc-400 text-base mt-2">
+          Here is your security overview
         </p>
-      )}
-      
-      <button 
-        onClick={signOut}
-        className="bg-white text-black hover:bg-gray-200 transition-colors px-4 py-2 rounded-md font-medium"
-      >
-        Sign Out
-      </button>
+      </div>
+
+      {/* Empty State Card */}
+      <div className="bg-[#18181B] border border-[#27272A] rounded-2xl p-12 unique-card">
+        <EmptyState
+          icon={Shield}
+          title="No scans yet"
+          description="Start your first security scan to protect your AI-generated code from vulnerabilities. Upload files, connect GitHub, or paste code directly."
+          actionLabel="Start Your First Scan"
+          actionHref="/scans/new"
+        />
+      </div>
     </div>
   )
 }

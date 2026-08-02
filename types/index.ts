@@ -225,6 +225,9 @@ export interface ScanJob {
   files: FileToScan[]
   sourceType: SourceType
   repoUrl?: string
+  r2Keys?: string[]
+  pastedCode?: string
+  language?: string
 }
 
 // ================================

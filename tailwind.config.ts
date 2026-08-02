@@ -18,6 +18,12 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        heading: ['var(--font-heading)', 'sans-serif'],
+        body: ['var(--font-body)', 'sans-serif'],
+        mono: ['var(--font-mono)', 'monospace'],
+        accent: ['var(--font-accent)', 'serif'],
+      },
       colors: {
         border: "var(--border)",
         input: "var(--input)",

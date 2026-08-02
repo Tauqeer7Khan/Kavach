@@ -13,6 +13,7 @@
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
   }
+
   :root {
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
@@ -47,6 +48,7 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
   }
+
   .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
@@ -80,13 +82,49 @@
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
   }
+
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
   }
+}
+
+::selection {
+  background-color: rgba(124, 58, 237, 0.3);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090B;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272A;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7C3AED;
+}
+
+.grid-pattern {
+  background-image: radial-gradient(circle, rgba(63, 63, 70, 0.3) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.unique-card {
+  background-image: linear-gradient(to bottom, transparent, rgba(124, 58, 237, 0.02));
 }
