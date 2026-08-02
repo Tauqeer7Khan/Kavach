@@ -86,20 +86,26 @@ export function useScan(): UseScanReturn {
       const res = await fetch(`/api/scan/${scanId}`)
       if (!res.ok) return
 
-      const data = await res.json() as {
-        status: ScanStatus
-        progress_percentage: number
-        progress_message: string
-        queue_position: number | null
-        security_score: number | null
-        grade: string | null
-        total_vulnerabilities: number | null
-        critical_count: number | null
-        high_count: number | null
-        medium_count: number | null
-        low_count: number | null
-        error_message: string | null
+      const json = await res.json() as {
+        success: boolean
+        scan: {
+          status: ScanStatus
+          progress_percentage: number
+          progress_message: string
+          queue_position: number | null
+          security_score: number | null
+          grade: string | null
+          total_vulnerabilities: number | null
+          critical_count: number | null
+          high_count: number | null
+          medium_count: number | null
+          low_count: number | null
+          error_message: string | null
+        }
       }
+
+      if (!json.success || !json.scan) return
+      const data = json.scan
 
       setScan(prev => ({
         ...prev,

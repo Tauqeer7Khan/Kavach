@@ -107,9 +107,22 @@ export default function ScanDetailPage() {
   const fetchReport = useCallback(async (): Promise<void> => {
     try {
       const res = await fetch(`/api/scan/${scanId}/report`)
-      if (!res.ok) return
-      const data = await res.json() as ScanReport
-      setReport(data)
+      if (!res.ok) {
+        console.error('Report fetch failed:', res.status)
+        return
+      }
+      const json = await res.json() as { success: boolean; scan: ScanReport; vulnerabilities?: Vulnerability[] }
+      console.log('[Scan Page] Report response:', json)
+
+      if (!json.success || !json.scan) {
+        console.error('[Scan Page] Invalid report response')
+        return
+      }
+
+      setReport({
+        ...json.scan,
+        vulnerabilities: json.vulnerabilities ?? [],
+      })
     } catch (err) {
       console.error('Fetch report error:', err)
     } finally {
@@ -120,25 +133,46 @@ export default function ScanDetailPage() {
   const fetchStatus = useCallback(async (): Promise<void> => {
     try {
       const res = await fetch(`/api/scan/${scanId}`)
-      if (!res.ok) return
-      const data = await res.json() as ScanReport
+      if (!res.ok) {
+        console.error('Scan fetch failed:', res.status)
+        setIsLoading(false)
+        return
+      }
+      const json = await res.json() as { success: boolean; scan: ScanReport }
+      console.log('[Scan Page] Status response:', json)
+
+      if (!json.success || !json.scan) {
+        console.error('[Scan Page] Invalid response structure')
+        setIsLoading(false)
+        return
+      }
+
+      const data = json.scan
       setReport(prev => prev ? { ...prev, ...data } : data)
 
-      if (data.status === 'completed') {
-        await fetchReport()
+      if (data.status === 'completed' || data.status === 'failed') {
+        if (data.status === 'completed') {
+          await fetchReport()
+        }
       }
     } catch (err) {
       console.error('Fetch status error:', err)
+    } finally {
+      setIsLoading(false)
     }
   }, [scanId, fetchReport])
 
   // ── Polling + Realtime ────────────────────────────────────────────────────
 
   useEffect(() => {
+    console.log('[Scan Page] scanId:', scanId)
+    console.log('[Scan Page] Starting fetch...')
+    
+    let stopped = false
     void fetchStatus()
 
     const interval = setInterval(() => {
-      if (report?.status === 'completed' || report?.status === 'failed') return
+      if (stopped) return
       void fetchStatus()
     }, 3000)
 
@@ -153,13 +187,18 @@ export default function ScanDetailPage() {
       }, (payload: any) => {
         const row = payload.new as Record<string, unknown>
         setReport(prev => prev ? { ...prev, ...row } as ScanReport : null)
-        if (row.status === 'completed') {
-          void fetchReport()
+        if (row.status === 'completed' || row.status === 'failed') {
+          stopped = true
+          clearInterval(interval)
+          if (row.status === 'completed') {
+            void fetchReport()
+          }
         }
       })
       .subscribe()
 
     return () => {
+      stopped = true
       clearInterval(interval)
       void supabase.removeChannel(channel)
     }
@@ -197,11 +236,11 @@ export default function ScanDetailPage() {
     )
   }
 
-  if (!report) {
+  if (!report || !report.status) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <XCircle className="h-12 w-12 text-red-400" />
-        <p className="text-white font-semibold">Scan not found</p>
+        <p className="text-white font-semibold">Scan not found or missing status data</p>
         <Button variant="outline" onClick={() => router.push('/scans')}>
           Back to Scans
         </Button>
