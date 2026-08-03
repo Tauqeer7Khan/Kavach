@@ -16,7 +16,6 @@ export default function LandingPage() {
     const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: -1000, y: -1000 })
     const [showCursor, setShowCursor] = useState<boolean>(false)
 
-    // Theme initialization from localStorage
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme')
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -38,7 +37,6 @@ export default function LandingPage() {
         }
     }
 
-    // Cursor glow - desktop only
     useEffect(() => {
         const checkCursorVisibility = (): void => {
             const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
@@ -59,8 +57,6 @@ export default function LandingPage() {
 
     return (
         <div className="min-h-screen bg-[#FAFAF9] dark:bg-[#09090B] text-[#18181B] dark:text-[#FAFAF9] transition-colors duration-300 font-body selection:bg-[#7C3AED]/30">
-
-            {/* Cursor Glow Effect */}
             {showCursor && (
                 <div
                     className="cursor-glow hidden lg:block"
