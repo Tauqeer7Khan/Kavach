@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { type LucideIcon } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 
 interface StatCardProps {

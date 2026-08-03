@@ -1,4 +1,9 @@
 import { redirect } from 'next/navigation'
+
+export const metadata = {
+  title: 'Dashboard | KAVACH',
+  description: 'View your security scan overview and recent results',
+}
 import Link from 'next/link'
 import {
   ScanSearch, TrendingUp, AlertTriangle,

@@ -90,10 +90,11 @@ export async function GET(
     
     return response;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`GET /api/scan/${params.id} error:`, error);
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
     return NextResponse.json(
-      { error: 'Internal server error', message: error.message || 'An unexpected error occurred' },
+      { error: 'Internal server error', message },
       { status: 500 }
     );
   }

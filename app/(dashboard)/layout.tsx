@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, PlusCircle, Search, FolderOpen, Settings, LogOut, Menu } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
@@ -108,7 +109,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {loading ? (
               <Skeleton className="w-full h-full bg-zinc-700" />
             ) : user?.avatar_url ? (
-              <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              <Image src={user.avatar_url} alt={user.name ?? 'Avatar'} width={32} height={32} className="w-full h-full object-cover" unoptimized />
             ) : (
               <span className="font-heading text-sm text-white">
                 {user?.name?.charAt(0)?.toUpperCase() || '?'}

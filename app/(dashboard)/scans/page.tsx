@@ -1,4 +1,9 @@
 import { redirect } from 'next/navigation'
+
+export const metadata = {
+  title: 'All Scans | KAVACH',
+  description: 'View and manage your security scan history',
+}
 import Link from 'next/link'
 import { PlusCircle, Shield } from 'lucide-react'
 import { createClient } from '@/lib/supabase-server'
@@ -45,7 +50,7 @@ export default async function ScansPage() {
             actionHref="/scans/new"
           />
         ) : (
-          <ScanTable scans={scans as any} />
+          <ScanTable scans={scans as never} />
         )}
       </div>
     </div>

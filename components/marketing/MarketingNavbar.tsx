@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import * as Icons from './LandingIcons'
 
 interface MarketingNavbarProps {
@@ -46,9 +47,11 @@ export default function MarketingNavbar({ isDark, toggleTheme }: MarketingNavbar
                         >
                             {isDark ? <Icons.Sun className="h-5 w-5" /> : <Icons.Moon className="h-5 w-5" />}
                         </button>
-                        <button className="bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white px-5 py-2.5 rounded-lg font-heading font-semibold text-sm transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/25 btn-ripple">
-                            Try Free
-                        </button>
+                        <Link href="/login">
+                          <button className="bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white px-5 py-2.5 rounded-lg font-heading font-semibold text-sm transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/25 btn-ripple">
+                              Try Free
+                          </button>
+                        </Link>
                     </div>
 
                     <div className="md:hidden flex items-center">
@@ -71,9 +74,11 @@ export default function MarketingNavbar({ isDark, toggleTheme }: MarketingNavbar
                     <a href="#features" onClick={() => setIsOpen(false)} className="text-zinc-600 dark:text-zinc-300 py-2 border-b border-zinc-100 dark:border-zinc-800">Features</a>
                     <a href="#how-it-works" onClick={() => setIsOpen(false)} className="text-zinc-600 dark:text-zinc-300 py-2 border-b border-zinc-100 dark:border-zinc-800">How it Works</a>
                     <a href="#faq" onClick={() => setIsOpen(false)} className="text-zinc-600 dark:text-zinc-300 py-2 border-b border-zinc-100 dark:border-zinc-800">FAQ</a>
-                    <button className="w-full bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white px-4 py-2.5 rounded-lg font-heading font-semibold mt-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]">
-                        Try Free
-                    </button>
+                    <Link href="/login">
+                      <button className="w-full bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white px-4 py-2.5 rounded-lg font-heading font-semibold mt-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]">
+                          Try Free
+                      </button>
+                    </Link>
                 </div>
             </div>
         </nav>

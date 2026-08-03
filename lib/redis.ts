@@ -12,7 +12,7 @@ export function getRedisClient(): Redis {
   return redis
 }
 
-export async function setWithExpiry(key: string, value: any, ttlSeconds: number): Promise<void> {
+export async function setWithExpiry(key: string, value: unknown, ttlSeconds: number): Promise<void> {
   const client = getRedisClient()
   await client.setex(key, ttlSeconds, JSON.stringify(value))
 }

@@ -1,4 +1,9 @@
 import { redirect } from 'next/navigation'
+
+export const metadata = {
+  title: 'Settings | KAVACH',
+  description: 'Manage your KAVACH account and preferences',
+}
 import { createClient } from '@/lib/supabase-server'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'

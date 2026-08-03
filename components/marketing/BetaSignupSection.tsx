@@ -1,13 +1,21 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function BetaSignupSection() {
     const [email, setEmail] = useState<string>('');
     const [submitted, setSubmitted] = useState<boolean>(false);
 
+    const router = useRouter();
+
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
-        if (email) setSubmitted(true);
+        if (email) {
+            setSubmitted(true);
+            setTimeout(() => {
+                router.push('/login');
+            }, 1500);
+        }
     };
 
     return (

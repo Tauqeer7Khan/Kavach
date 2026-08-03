@@ -1,4 +1,9 @@
 import { redirect } from 'next/navigation'
+
+export const metadata = {
+  title: 'Projects | KAVACH',
+  description: 'View and manage your scanned projects',
+}
 import Link from 'next/link'
 import { PlusCircle, FolderOpen, Upload, Code } from 'lucide-react'
 import { GithubIcon } from '@/components/shared/GithubIcon'

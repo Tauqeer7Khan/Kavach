@@ -79,7 +79,7 @@ function LoginContent() {
         </div>
 
         <p className="mt-8 text-center text-sm text-gray-500 max-w-sm">
-          By continuing, you agree to KAVACH's{' '}
+          By continuing, you agree to KAVACH&apos;s{' '}
           <Link href="/terms" className="text-gray-400 hover:text-white underline underline-offset-4">Terms of Service</Link>{' '}
           and{' '}
           <Link href="/privacy" className="text-gray-400 hover:text-white underline underline-offset-4">Privacy Policy</Link>.

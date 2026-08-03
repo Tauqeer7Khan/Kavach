@@ -177,7 +177,7 @@ export default function NewScanPage() {
 
           <TabsContent value="github" className="mt-0 block w-full">
             <GitHubConnect 
-              onRepoValidated={(url, name) => { setRepoUrl(url); setRepoValidated(true) }}
+              onRepoValidated={(url) => { setRepoUrl(url); setRepoValidated(true) }}
             />
           </TabsContent>
 

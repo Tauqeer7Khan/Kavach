@@ -113,7 +113,7 @@ export async function GET(
     });
 
     // 7. Fetch scan files (if available)
-    const { data: files, error: filesError } = await supabase
+    const { data: files } = await supabase
       .from('scan_files')
       .select('*')
       .eq('scan_id', scanId);
@@ -206,8 +206,8 @@ export async function GET(
     const reportData: ScanReportResponse & { success: boolean } = {
       success: true,
       scan: scan,
-      vulnerabilities: sortedVulns as any[],
-      files: scanFiles as any[],
+      vulnerabilities: sortedVulns as never[],
+      files: scanFiles as never[],
       owaspBreakdown,
       severityBreakdown,
       topVulnerableFiles: top5Files
@@ -220,10 +220,11 @@ export async function GET(
     
     return response;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`GET /api/scan/${params.id}/report error:`, error);
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
     return NextResponse.json(
-      { error: 'Internal server error', message: error.message || 'An unexpected error occurred' },
+      { error: 'Internal server error', message },
       { status: 500 }
     );
   }

@@ -1,0 +1,22 @@
+# Don't deploy the worker
+worker/
+
+# Don't deploy dev files
+docs/
+assets/
+database/
+test-scan.ts
+check-queue.ts
+dummy-landing.tsx.old
+dummy-landing.tsx.reference
+
+# Don't deploy markdown except README
+*.md
+!README.md
+
+# Don't deploy env examples
+.env.example
+
+# Don't deploy the tests folder if exists
+tests/
+__tests__/

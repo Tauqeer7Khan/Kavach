@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
         
         uploadedKeys.push(r2Key);
       }
-    } catch (uploadError: any) {
+    } catch (uploadError: unknown) {
       console.error('R2 upload failed:', uploadError);
       
       // Try to clean up any partially uploaded files
@@ -176,10 +176,11 @@ export async function POST(request: NextRequest) {
       message: `Successfully uploaded ${files.length} files`
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('POST /api/upload error:', error);
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
     return NextResponse.json(
-      { error: 'Internal server error', message: error.message || 'An unexpected error occurred' },
+      { error: 'Internal server error', message },
       { status: 500 }
     );
   }

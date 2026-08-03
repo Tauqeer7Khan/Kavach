@@ -184,8 +184,8 @@ export default function ScanDetailPage() {
         schema: 'public',
         table: 'scans',
         filter: `id=eq.${scanId}`,
-      }, (payload: any) => {
-        const row = payload.new as Record<string, unknown>
+      }, (payload: { new: Record<string, unknown> }) => {
+        const row = payload.new
         setReport(prev => prev ? { ...prev, ...row } as ScanReport : null)
         if (row.status === 'completed' || row.status === 'failed') {
           stopped = true
