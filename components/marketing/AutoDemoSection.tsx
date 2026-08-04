@@ -123,8 +123,8 @@ def read_file():
 
                 <div className="flex flex-col gap-8 max-w-4xl mx-auto">
                     {/* Editor Top Side - FIX #12: KEEP .card-hover */}
-                    <div className="rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-xl bg-[#18181B] flex flex-col h-[400px] card-hover">
-                        <div className="bg-[#09090B] px-4 py-3 flex items-center border-b border-zinc-800">
+                    <div className="rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-xl bg-zinc-50 dark:bg-[#111111] flex flex-col h-[400px] card-hover transition-colors">
+                        <div className="bg-zinc-100 dark:bg-[#09090B] px-4 py-3 flex items-center border-b border-zinc-200 dark:border-zinc-800 transition-colors">
                             <div className="flex space-x-2">
                                 <div className="w-3 h-3 rounded-full bg-red-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"></div>
                                 <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"></div>
@@ -136,11 +136,11 @@ def read_file():
                         </div>
 
                         <div className="relative font-mono text-sm overflow-hidden flex-1 flex">
-                            <div className="w-10 bg-[#09090B]/50 border-r border-zinc-800/50 py-6 text-right pr-3 select-none text-zinc-600 text-xs">
+                            <div className="w-10 bg-zinc-100 dark:bg-[#09090B]/50 border-r border-zinc-200 dark:border-zinc-800/50 py-6 text-right pr-3 select-none text-zinc-400 dark:text-zinc-600 text-xs transition-colors">
                                 {Array.from({ length: 12 }).map((_, i) => <div key={i} className="h-[21px]">{i + 1}</div>)}
                             </div>
                             <div className="relative p-6 flex-1 overflow-hidden">
-                                <pre className="text-zinc-300 leading-[21px] transition-all duration-500">
+                                <pre className="text-zinc-800 dark:text-zinc-300 leading-[21px] transition-all duration-500">
                                     <code dangerouslySetInnerHTML={{
                                         __html: scanState === 'fixed'
                                             ? secureCode.replace(/if not filename.*/g, '<span class="text-[#34D399]">if not filename or \\\'/\\\' in filename or \\\'..\\\' in filename:\\n        abort(400)</span>').replace('# ✅ FIXED: Validate filename', '<span class="text-[#34D399]"># ✅ FIXED: Validate filename</span>')
@@ -153,7 +153,7 @@ def read_file():
                                 )}
 
                                 {(scanState === 'found' || scanState === 'fix_ready') && (
-                                    <div className="absolute top-[140px] left-2 right-4 h-12 bg-[#F87171]/10 border border-[#F87171]/50 rounded pointer-events-none fade-in-animation" />
+                                    <div className="absolute left-0 right-0 h-[42px] bg-[#F87171]/10 border-y border-[#F87171]/50 pointer-events-none fade-in-animation" style={{ top: '171px' }} />
                                 )}
                             </div>
                         </div>
@@ -161,7 +161,7 @@ def read_file():
 
                     {/* Report Bottom Side - FIX #12: KEEP .card-hover */}
                     <div className="flex flex-col space-y-6">
-                        <div className="bg-white dark:bg-[#18181B] rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-lg relative overflow-hidden h-[400px] flex flex-col unique-card card-hover">
+                        <div className="bg-white dark:bg-[#111111] rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-lg relative overflow-hidden h-[400px] flex flex-col unique-card card-hover transition-colors">
                             <div className="flex justify-between items-center mb-8 pb-6 border-b border-zinc-100 dark:border-zinc-800">
                                 <div>
                                     <h3 className="font-heading font-semibold text-zinc-800 dark:text-white text-lg">Analysis Report</h3>
@@ -186,7 +186,7 @@ def read_file():
                                 {scanState === 'scanning' && (
                                     <div className="text-center fade-in-animation">
                                         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#7C3AED] mx-auto mb-4"></div>
-                                        <p className="font-mono text-sm font-medium text-zinc-600 dark:text-zinc-300">Analyzing AI-generated logic...</p>
+                                        <p className="font-mono text-sm font-medium text-zinc-700 dark:text-zinc-300">Analyzing AI-generated logic...</p>
                                     </div>
                                 )}
 

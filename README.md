@@ -1,9 +1,13 @@
 # 🛡️ KAVACH — AI Code Security Analyzer
 
-[![Status: In Active Development](https://img.shields.io/badge/Status-In_Active_Development-blueviolet?style=for-the-badge)](https://github.com/Tauqeer7Khan/Kavach)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-ai--kavach.vercel.app-7C3AED?style=for-the-badge)](https://ai-kavach.vercel.app)
+[![Status: Launched](https://img.shields.io/badge/Status-Launched-success?style=for-the-badge)](https://ai-kavach.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 > **"AI wrote the code. KAVACH makes it secure."**
+
+🔗 **Live Demo:** https://ai-kavach.vercel.app  
+📂 **Source:** https://github.com/Tauqeer7Khan/Kavach
 
 KAVACH is an open-source security analysis tool designed specifically for AI-generated code. It scans codebases built with ChatGPT, GitHub Copilot, Cursor, Bolt.new, v0.dev, and other AI coding tools to find security vulnerabilities that AI commonly introduces.
 
@@ -152,7 +156,7 @@ JavaScript, TypeScript, Python, PHP, Java, Go, Ruby, Rust, C, C++, C#
 
 ```
 🚧 Current Status & Build Progress
-In active development — Building in public over 7 days.
+✅ LAUNCHED — Built and deployed in 7 days. Live at https://ai-kavach.vercel.app
 
 The 7-Day Build Plan
 ✅ Day 1: Project foundation, database schema, TypeScript types
@@ -161,7 +165,7 @@ The 7-Day Build Plan
 ✅ Day 4: API routes + File upload + GitHub integration
 ✅ Day 5: Dashboard UI + Landing page + Full scan flow
 ✅ Day 6: Polish + Error Handling + Deployment Prep
-⏳ Day 7: Final testing, deployment, and public launch
+✅ Day 7: Deployed to Vercel — LIVE at https://ai-kavach.vercel.app 🚀
 
 
  Day 1 Completed ✅
@@ -234,6 +238,20 @@ The 7-Day Build Plan
 - Created comprehensive E2E testing checklist (docs/testing-checklist.md)
 - Production build: zero errors, zero warnings, 17 static pages
 - Ready for Vercel deployment
+
+## Day 7 Completed ✅
+
+- Deployed frontend to Vercel: https://ai-kavach.vercel.app
+- Configured all production environment variables
+- Updated Supabase Auth redirect URLs for production
+- Updated GitHub OAuth App callback URLs
+- Fixed Vercel manifest error (removed empty route group)
+- Custom vercel.app subdomain: ai-kavach.vercel.app
+- All 17 pages working in production
+- GitHub OAuth login working end-to-end on production
+- Full scan flow verified: paste code → queue → scan → report
+- README updated with live demo URL and launched status
+- **7-day public build complete! 🛡️🚀**
 ```
 
 📊 Key Metrics

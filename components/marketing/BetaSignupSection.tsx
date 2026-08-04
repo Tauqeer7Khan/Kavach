@@ -19,7 +19,7 @@ export default function BetaSignupSection() {
     };
 
     return (
-        <section id="beta-signup" className="py-24 bg-gradient-to-br from-purple-50 to-zinc-50 dark:from-purple-900/10 dark:to-zinc-900/10 border-t border-zinc-200 dark:border-zinc-800 relative overflow-hidden">
+        <section id="beta-signup" className="py-24 bg-gradient-to-br from-purple-50 to-zinc-50 dark:from-purple-900/10 dark:to-zinc-900/10 border-t border-zinc-200 dark:border-zinc-800 relative overflow-hidden transition-colors">
             <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 blur-[100px] rounded-full pointer-events-none"></div>
 
             <div className="max-w-2xl mx-auto px-4 text-center relative z-10">

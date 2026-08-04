@@ -3,6 +3,7 @@
 import * as Icons from './LandingIcons'
 import Reveal from './Reveal'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function HeroSection() {
     return (
@@ -56,41 +57,34 @@ export default function HeroSection() {
                     </div>
                 </Reveal>
 
-                <Reveal delay={600} className="mt-16 mx-auto max-w-5xl">
-                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#18181B] shadow-2xl overflow-hidden aspect-video relative flex flex-col hover:border-[#7C3AED]/50 transition-colors duration-300">
-                        <div className="h-12 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-[#09090B] flex items-center px-4 gap-2">
+                <Reveal delay={600} className="mt-16 mx-auto max-w-5xl relative">
+                    {/* Floating Labels */}
+                    <div className="absolute -top-4 -right-4 hidden md:flex items-center gap-2 bg-white dark:bg-[#18181B] border border-[#7C3AED]/30 text-zinc-900 dark:text-[#FAFAF9] px-3 py-1.5 rounded-full text-xs font-mono shadow-xl shadow-purple-500/10 z-10 animate-bounce" style={{ animationDuration: '3s' }}>
+                        <span className="w-2 h-2 rounded-full bg-[#34D399]"></span>
+                        AI-powered scoring
+                    </div>
+                    <div className="absolute top-32 -left-8 hidden md:flex items-center gap-2 bg-white dark:bg-[#18181B] border border-[#7C3AED]/30 text-zinc-900 dark:text-[#FAFAF9] px-3 py-1.5 rounded-full text-xs font-mono shadow-xl shadow-purple-500/10 z-10 animate-bounce" style={{ animationDuration: '4s' }}>
+                        <span className="w-2 h-2 rounded-full bg-[#7C3AED]"></span>
+                        OWASP mapping
+                    </div>
+
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#18181B] shadow-2xl overflow-hidden relative flex flex-col hover:border-[#7C3AED]/50 transition-colors duration-300">
+                        <div className="h-12 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-[#09090B] flex items-center px-4 gap-2 flex-shrink-0">
                             <div className="w-3 h-3 rounded-full bg-red-400"></div>
                             <div className="w-3 h-3 rounded-full bg-amber-400"></div>
                             <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
-                            <div className="mx-auto text-xs text-zinc-400 font-mono">dashboard.kavach.dev</div>
+                            <div className="mx-auto text-xs text-zinc-400 font-mono bg-white dark:bg-zinc-900/50 px-3 py-1 rounded-md border border-zinc-200 dark:border-zinc-800 hidden sm:block">ai-kavach.vercel.app/scans/report</div>
                         </div>
-                        <div className="flex-1 flex">
-                            <div className="w-64 border-r border-zinc-100 dark:border-zinc-800 p-4 hidden md:block">
-                                <div className="h-8 bg-zinc-100 dark:bg-zinc-800/50 rounded mb-4 w-3/4"></div>
-                                <div className="space-y-3">
-                                    {[...Array(5)].map((_, i) => (
-                                        <div key={i} className="h-6 bg-zinc-50 dark:bg-[#09090B] rounded w-full"></div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="flex-1 p-8">
-                                <div className="flex justify-between items-end mb-8">
-                                    <div>
-                                        <div className="h-6 w-48 bg-zinc-200 dark:bg-zinc-800 rounded mb-2"></div>
-                                        <div className="h-4 w-32 bg-zinc-100 dark:bg-zinc-900 rounded"></div>
-                                    </div>
-                                    <div className="w-24 h-24 rounded-full border-8 border-[#34D399] flex items-center justify-center">
-                                        <span className="text-2xl font-heading font-bold text-[#34D399]">A</span>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-3 gap-4 mb-8">
-                                    {[...Array(3)].map((_, i) => (
-                                        <div key={i} className="h-24 bg-zinc-50 dark:bg-[#09090B] border border-zinc-100 dark:border-zinc-800 rounded-xl p-4">
-                                            <div className="h-4 w-1/2 bg-zinc-200 dark:bg-zinc-800 rounded mb-4"></div>
-                                            <div className="h-8 w-1/3 bg-zinc-300 dark:bg-zinc-700 rounded"></div>
-                                        </div>
-                                    ))}
-                                </div>
+                        <div className="flex-1 bg-zinc-100 dark:bg-zinc-900 p-2 sm:p-4">
+                            <div className="relative rounded-lg overflow-hidden border border-purple-500/20 shadow-2xl shadow-purple-500/20 bg-white dark:bg-[#0a0a0a]">
+                                <Image
+                                    src="/screenshots/security-report-demo.png"
+                                    alt="KAVACH Security Report - Real Scan Result"
+                                    width={1920}
+                                    height={1080}
+                                    className="w-full h-auto object-cover"
+                                    priority
+                                />
                             </div>
                         </div>
                     </div>

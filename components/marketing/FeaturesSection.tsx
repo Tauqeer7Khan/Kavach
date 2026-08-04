@@ -22,10 +22,10 @@ export default function FeaturesSection() {
     ];
 
     return (
-        <section className="py-24 bg-[#FAFAF9] dark:bg-[#09090B] border-t border-zinc-200 dark:border-zinc-800" id="features">
+        <section className="py-24 bg-[#FAFAF9] dark:bg-[#09090B] border-t border-zinc-200 dark:border-zinc-800 transition-colors" id="features">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16">
-                    <div className="inline-flex items-center rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#18181B] px-4 py-1.5 text-sm font-mono text-zinc-600 dark:text-zinc-400 mb-6 shadow-sm">
+                    <div className="inline-flex items-center rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#111111] px-4 py-1.5 text-sm font-mono text-zinc-600 dark:text-zinc-400 mb-6 shadow-sm transition-colors">
                         OWASP Top 10 Coverage
                     </div>
                     <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#18181B] dark:text-[#FAFAF9]">We catch what LLMs miss</h2>
@@ -36,8 +36,8 @@ export default function FeaturesSection() {
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {features.map((feature, i) => (
-                        <Reveal key={i} delay={i * 100}>
-                            <div className="bg-white dark:bg-[#18181B] p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all group card-hover">
+                        <Reveal key={i} delay={i * 100} className="h-full">
+                            <div className="bg-white dark:bg-[#111111] p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all group card-hover h-full flex flex-col">
                                 <div className="flex justify-between items-start mb-4">
                                     <div className={`p-3 rounded-xl border ${feature.bg} ${feature.color} transition-transform group-hover:scale-110`}>
                                         <feature.icon className="h-6 w-6" />
@@ -45,7 +45,7 @@ export default function FeaturesSection() {
                                     <span className={`text-xs font-mono font-medium ${feature.color}`}>{feature.tag}</span>
                                 </div>
                                 <h3 className="text-xl font-heading font-semibold text-[#18181B] dark:text-[#FAFAF9] mb-2">{feature.title}</h3>
-                                <p className="font-body text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">{feature.desc}</p>
+                                <p className="font-body text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed flex-grow">{feature.desc}</p>
                             </div>
                         </Reveal>
                     ))}

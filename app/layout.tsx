@@ -34,8 +34,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("dark", inter.variable, spaceGrotesk.variable, jetbrainsMono.variable, instrumentSerif.variable)}>
-      <body className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} bg-[#09090B] text-[#FAFAF9] font-body min-h-screen antialiased`}>
+    <html lang="en" suppressHydrationWarning className={cn(inter.variable, spaceGrotesk.variable, jetbrainsMono.variable, instrumentSerif.variable)}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{const t=localStorage.getItem('theme');
+            const p=window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if(t==='dark'||(!t&&p)){document.documentElement.classList.add('dark');}
+            }catch(e){}})();`,
+          }}
+        />
+      </head>
+      <body className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} bg-[#FAFAF9] dark:bg-[#09090B] text-[#18181B] dark:text-[#FAFAF9] font-body min-h-screen antialiased transition-colors duration-300`}>
         {children}
         <Toaster />
       </body>

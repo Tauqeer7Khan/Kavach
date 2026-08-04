@@ -28,7 +28,7 @@ export default function FAQSection() {
     ];
 
     return (
-        <section className="py-24 bg-[#FAFAF9] dark:bg-[#09090B] border-t border-zinc-200 dark:border-zinc-800" id="faq">
+        <section className="py-24 bg-[#FAFAF9] dark:bg-[#09090B] border-t border-zinc-200 dark:border-zinc-800 transition-colors" id="faq">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
                 <h2 className="text-3xl md:text-4xl font-heading font-bold text-center mb-12 text-[#18181B] dark:text-[#FAFAF9]">
                     Frequently asked questions
@@ -37,7 +37,7 @@ export default function FAQSection() {
                     {faqs.map((faq, i) => (
                         <details
                             key={i}
-                            className="group bg-white dark:bg-[#18181B] rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 cursor-pointer hover:border-[#7C3AED]/50 transition-colors open:border-l-4 open:border-l-[#7C3AED]"
+                            className="group bg-white dark:bg-[#111111] rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 cursor-pointer hover:border-[#7C3AED]/50 transition-colors open:border-l-4 open:border-l-[#7C3AED]"
                         >
                             <summary className="flex justify-between items-center font-heading font-semibold text-[#18181B] dark:text-[#FAFAF9] list-none">
                                 <span className="flex items-center">

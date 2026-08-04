@@ -37,13 +37,13 @@ export default function MarketingNavbar({ isDark, toggleTheme }: MarketingNavbar
                     </div>
 
                     <div className="hidden md:flex items-center space-x-4">
-                        <a href="https://github.com" target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-[#18181B] dark:hover:text-white transition-colors">
+                        <a href="https://github.com/Tauqeer7Khan" target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-[#18181B] dark:hover:text-white transition-colors">
                             <Icons.Github className="h-5 w-5" />
                         </a>
                         <button
                             onClick={toggleTheme}
-                            className="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors text-zinc-500 dark:text-zinc-400"
-                            aria-label="Toggle Dark Mode"
+                            className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors text-zinc-500 dark:text-zinc-400"
+                            aria-label="Toggle Theme"
                         >
                             {isDark ? <Icons.Sun className="h-5 w-5" /> : <Icons.Moon className="h-5 w-5" />}
                         </button>
@@ -57,7 +57,7 @@ export default function MarketingNavbar({ isDark, toggleTheme }: MarketingNavbar
                     <div className="md:hidden flex items-center">
                         <button
                             onClick={toggleTheme}
-                            className="p-2 mr-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors text-zinc-500 dark:text-zinc-400"
+                            className="p-2 mr-2 rounded-full hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors text-zinc-500 dark:text-zinc-400"
                         >
                             {isDark ? <Icons.Sun className="h-5 w-5" /> : <Icons.Moon className="h-5 w-5" />}
                         </button>
