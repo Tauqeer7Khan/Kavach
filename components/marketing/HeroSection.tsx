@@ -13,11 +13,6 @@ export default function HeroSection() {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-                <Reveal delay={0}>
-                    <div className="inline-flex items-center rounded-full border border-purple-200 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/10 px-4 py-1.5 text-sm font-mono text-purple-700 dark:text-purple-400 mb-8 shadow-sm">
-                        <span className="mr-2 text-xs">▶</span> Currently in Beta · Free to Try
-                    </div>
-                </Reveal>
 
                 <Reveal delay={100}>
                     <h1 className="text-5xl md:text-7xl font-heading font-bold tracking-tighter text-[#18181B] dark:text-[#FAFAF9] mb-4 leading-[1.1]">
@@ -41,9 +36,6 @@ export default function HeroSection() {
                               <span className="flex items-center">Get Early Access <Icons.ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" /></span>
                           </button>
                         </Link>
-                        <a href="#demo" onClick={(e) => { e.preventDefault(); document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-body text-zinc-500 hover:text-[#7C3AED] transition-colors">
-                            or watch the 30-second demo →
-                        </a>
                     </div>
                 </Reveal>
 
