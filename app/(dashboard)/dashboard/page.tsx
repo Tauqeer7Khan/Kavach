@@ -89,10 +89,10 @@ export default async function DashboardPage() {
       {/* Welcome Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
             Welcome back, {displayName}! 👋
           </h1>
-          <p className="text-zinc-400 mt-1">
+          <p className="text-zinc-600 dark:text-zinc-400 mt-1">
             {stats.totalScans === 0
               ? 'Start your first security scan to protect your code'
               : "Here's your security overview"
@@ -100,7 +100,7 @@ export default async function DashboardPage() {
           </p>
         </div>
         <Link href="/scans/new">
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button className="bg-indigo-600 hover:bg-indigo-700 text-zinc-900 dark:text-white">
             <PlusCircle className="h-4 w-4 mr-2" />
             New Scan
           </Button>
@@ -156,21 +156,21 @@ export default async function DashboardPage() {
       )}
 
       {/* New Scan CTA Card */}
-      <div className="bg-[#111111] border border-[#1f1f1f] border-l-4 border-l-indigo-500 rounded-xl p-6">
+      <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] border-l-4 border-l-indigo-500 rounded-xl p-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-2">
-            <h3 className="text-white font-semibold">Scan your AI-generated code</h3>
-            <p className="text-sm text-zinc-400 max-w-md">
+            <h3 className="text-zinc-900 dark:text-white font-semibold">Scan your AI-generated code</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-md">
               Upload files or paste a GitHub URL to find vulnerabilities in under 2 minutes.
             </p>
-            <div className="flex flex-wrap gap-3 text-xs text-zinc-500 pt-1">
+            <div className="flex flex-wrap gap-3 text-xs text-zinc-500 dark:text-zinc-500 pt-1">
               {['✓ SQL Injection', '✓ Secret Scanning', '✓ XSS Detection', '✓ AI Review'].map(item => (
                 <span key={item}>{item}</span>
               ))}
             </div>
           </div>
           <Link href="/scans/new" className="flex-shrink-0">
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white whitespace-nowrap">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-zinc-900 dark:text-white whitespace-nowrap">
               Start New Scan →
             </Button>
           </Link>
@@ -180,7 +180,7 @@ export default async function DashboardPage() {
       {/* Recent Scans */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Recent Scans</h2>
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Recent Scans</h2>
           {scans.length > 0 && (
             <Link href="/scans" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
               View all →

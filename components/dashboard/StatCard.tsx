@@ -21,7 +21,7 @@ export default function StatCard({
   isLoading = false,
 }: StatCardProps) {
   const iconColors: Record<string, string> = {
-    default: 'text-zinc-400 bg-zinc-800',
+    default: 'text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800',
     red: 'text-red-400 bg-red-500/10',
     green: 'text-green-400 bg-green-500/10',
     yellow: 'text-yellow-400 bg-yellow-500/10',
@@ -38,28 +38,28 @@ export default function StatCard({
 
   if (isLoading) {
     return (
-      <div className="bg-[#111111] border border-[#1f1f1f] rounded-xl p-6">
+      <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <Skeleton className="h-4 w-24 bg-zinc-800" />
-          <Skeleton className="h-10 w-10 rounded-lg bg-zinc-800" />
+          <Skeleton className="h-4 w-24 bg-zinc-100 dark:bg-zinc-800" />
+          <Skeleton className="h-10 w-10 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
         </div>
-        <Skeleton className="h-8 w-16 bg-zinc-800 mb-2" />
-        <Skeleton className="h-3 w-32 bg-zinc-800" />
+        <Skeleton className="h-8 w-16 bg-zinc-100 dark:bg-zinc-800 mb-2" />
+        <Skeleton className="h-3 w-32 bg-zinc-100 dark:bg-zinc-800" />
       </div>
     )
   }
 
   return (
-    <div className="bg-[#111111] border border-[#1f1f1f] rounded-xl p-6 hover:border-zinc-700 transition-colors group">
+    <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-xl p-6 hover:border-zinc-200 dark:border-zinc-700 transition-colors group">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-zinc-400 font-medium">{title}</p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">{title}</p>
         <div className={`p-2.5 rounded-lg ${iconColors[color]}`}>
           {renderIcon()}
         </div>
       </div>
-      <p className="text-3xl font-bold text-white mb-1">{value}</p>
+      <p className="text-3xl font-bold text-zinc-900 dark:text-white mb-1">{value}</p>
       {subtitle && (
-        <p className="text-xs text-zinc-500">{subtitle}</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-500">{subtitle}</p>
       )}
     </div>
   )

@@ -5,16 +5,16 @@ export default function ScansLoading() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <Skeleton className="h-8 w-40 bg-[#111111]" />
-          <Skeleton className="h-4 w-32 bg-[#111111]" />
+          <Skeleton className="h-8 w-40 bg-white dark:bg-[#111111]" />
+          <Skeleton className="h-4 w-32 bg-white dark:bg-[#111111]" />
         </div>
-        <Skeleton className="h-10 w-32 bg-[#111111]" />
+        <Skeleton className="h-10 w-32 bg-white dark:bg-[#111111]" />
       </div>
 
-      <div className="rounded-xl border border-[#1f1f1f] p-4 space-y-3">
-        <Skeleton className="h-10 w-full bg-[#111111]" />
+      <div className="rounded-xl border border-zinc-200 dark:border-[#1f1f1f] p-4 space-y-3">
+        <Skeleton className="h-10 w-full bg-white dark:bg-[#111111]" />
         {[1, 2, 3, 4, 5, 6].map(i => (
-          <Skeleton key={i} className="h-14 w-full bg-[#111111]" />
+          <Skeleton key={i} className="h-14 w-full bg-white dark:bg-[#111111]" />
         ))}
       </div>
     </div>

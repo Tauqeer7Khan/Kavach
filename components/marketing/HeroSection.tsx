@@ -36,7 +36,7 @@ export default function HeroSection() {
 
                 <Reveal delay={300}>
                     <div className="mt-10 flex flex-col items-center justify-center space-y-4">
-                        <Link href="/login">
+                        <Link href="/dashboard">
                           <button className="bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white px-10 py-4 rounded-lg font-heading font-semibold text-lg transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/25 flex items-center justify-center btn-ripple group">
                               <span className="flex items-center">Get Early Access <Icons.ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" /></span>
                           </button>

@@ -121,34 +121,34 @@ export default function NewScanPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="font-heading font-bold text-3xl md:text-4xl text-white tracking-tight">
+        <h1 className="font-heading font-bold text-3xl md:text-4xl text-zinc-900 dark:text-white tracking-tight">
           New Security Scan
         </h1>
-        <p className="font-body text-zinc-400 text-base mt-2">
+        <p className="font-body text-zinc-600 dark:text-zinc-400 text-base mt-2">
           Upload your AI-generated code to find security vulnerabilities
         </p>
       </div>
 
-      <div className="bg-[#18181B] border border-[#27272A] rounded-2xl p-6 md:p-8 unique-card">
+      <div className="bg-white dark:bg-[#0f0f10] border border-zinc-200 dark:border-[#27272A] rounded-2xl p-6 md:p-8 unique-card">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'upload' | 'github' | 'paste')} className="flex flex-col w-full">
-          <TabsList className="grid grid-cols-3 w-full bg-zinc-900/50 border border-zinc-800 p-1 rounded-lg mb-6">
+          <TabsList className="grid grid-cols-3 w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 p-1 rounded-lg mb-6">
             <TabsTrigger 
               value="upload" 
-              className="font-heading font-medium data-[state=active]:bg-gradient-to-b data-[state=active]:from-[#8B5CF6] data-[state=active]:to-[#7C3AED] data-[state=active]:text-white data-[state=active]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
+              className="font-heading font-medium data-[state=active]:bg-gradient-to-b data-[state=active]:from-[#8B5CF6] data-[state=active]:to-[#7C3AED] data-[state=active]:text-zinc-900 dark:text-white data-[state=active]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
             >
               <Upload className="h-4 w-4 mr-2" />
               Upload Files
             </TabsTrigger>
             <TabsTrigger 
               value="github" 
-              className="font-heading font-medium data-[state=active]:bg-gradient-to-b data-[state=active]:from-[#8B5CF6] data-[state=active]:to-[#7C3AED] data-[state=active]:text-white data-[state=active]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
+              className="font-heading font-medium data-[state=active]:bg-gradient-to-b data-[state=active]:from-[#8B5CF6] data-[state=active]:to-[#7C3AED] data-[state=active]:text-zinc-900 dark:text-white data-[state=active]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
             >
               <GithubIcon className="h-4 w-4 mr-2" size={16} />
               GitHub Repo
             </TabsTrigger>
             <TabsTrigger 
               value="paste" 
-              className="font-heading font-medium data-[state=active]:bg-gradient-to-b data-[state=active]:from-[#8B5CF6] data-[state=active]:to-[#7C3AED] data-[state=active]:text-white data-[state=active]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
+              className="font-heading font-medium data-[state=active]:bg-gradient-to-b data-[state=active]:from-[#8B5CF6] data-[state=active]:to-[#7C3AED] data-[state=active]:text-zinc-900 dark:text-white data-[state=active]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
             >
               <Code2 className="h-4 w-4 mr-2" />
               Paste Code
@@ -157,9 +157,9 @@ export default function NewScanPage() {
 
           <TabsContent value="upload" className="mt-0 block w-full">
             {isUploading ? (
-              <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-zinc-700 rounded-lg bg-zinc-900/50">
+              <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-900/50">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7C3AED] mb-4"></div>
-                <p className="text-zinc-400 font-mono text-sm">Uploading files...</p>
+                <p className="text-zinc-600 dark:text-zinc-400 font-mono text-sm">Uploading files...</p>
               </div>
             ) : r2Key ? (
               <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-emerald-900/50 rounded-lg bg-emerald-900/10">
@@ -189,9 +189,9 @@ export default function NewScanPage() {
         </Tabs>
       </div>
 
-      <div className="bg-[#18181B] border border-[#27272A] rounded-2xl p-6 md:p-8 unique-card space-y-6">
+      <div className="bg-white dark:bg-[#0f0f10] border border-zinc-200 dark:border-[#27272A] rounded-2xl p-6 md:p-8 unique-card space-y-6">
         <div>
-          <label htmlFor="project-name" className="font-body font-medium text-sm text-white block mb-2">
+          <label htmlFor="project-name" className="font-body font-medium text-sm text-zinc-900 dark:text-white block mb-2">
             Project Name
           </label>
           <Input
@@ -199,9 +199,9 @@ export default function NewScanPage() {
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
             placeholder="e.g. My Payment Gateway"
-            className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 font-body focus-visible:ring-[#7C3AED] focus-visible:ring-offset-0"
+            className="bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white placeholder:text-zinc-600 font-body focus-visible:ring-[#7C3AED] focus-visible:ring-offset-0"
           />
-          <p className="font-mono text-xs text-zinc-500 mt-2">
+          <p className="font-mono text-xs text-zinc-500 dark:text-zinc-500 mt-2">
             Give your scan a memorable name to find it later
           </p>
         </div>
@@ -210,8 +210,8 @@ export default function NewScanPage() {
           disabled={!isStartEnabled || isCreating}
           className={`w-full flex items-center justify-center gap-2 px-6 py-4 rounded-lg font-heading font-semibold text-base transition-all ${
             isStartEnabled && !isCreating
-              ? 'bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] hover:scale-[1.01] hover:shadow-lg hover:shadow-purple-500/25 cursor-pointer'
-              : 'bg-zinc-900 text-zinc-600 border border-zinc-800 cursor-not-allowed'
+              ? 'bg-gradient-to-b from-[#8B5CF6] to-[#7C3AED] text-zinc-900 dark:text-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)] hover:scale-[1.01] hover:shadow-lg hover:shadow-purple-500/25 cursor-pointer'
+              : 'bg-zinc-900 text-zinc-600 border border-zinc-200 dark:border-zinc-800 cursor-not-allowed'
           }`}
           onClick={handleStartScan}
         >

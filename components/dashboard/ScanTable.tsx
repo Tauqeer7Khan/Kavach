@@ -41,7 +41,7 @@ interface ScanTableProps {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function scoreColor(score: number | null): string {
-  if (score === null) return 'text-zinc-400'
+  if (score === null) return 'text-zinc-600 dark:text-zinc-400'
   if (score >= 80) return 'text-green-400'
   if (score >= 70) return 'text-yellow-400'
   if (score >= 50) return 'text-orange-400'
@@ -77,7 +77,7 @@ export default function ScanTable({ scans, isLoading = false }: ScanTableProps) 
     return (
       <div className="space-y-3">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-14 w-full bg-[#111111]" />
+          <Skeleton key={i} className="h-14 w-full bg-white dark:bg-[#111111]" />
         ))}
       </div>
     )
@@ -85,39 +85,39 @@ export default function ScanTable({ scans, isLoading = false }: ScanTableProps) 
 
   if (scans.length === 0) {
     return (
-      <div className="text-center py-12 text-zinc-500">
+      <div className="text-center py-12 text-zinc-500 dark:text-zinc-500">
         No scans yet. Start your first scan!
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-[#1f1f1f] overflow-hidden">
+    <div className="rounded-xl border border-zinc-200 dark:border-[#1f1f1f] overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="border-[#1f1f1f] hover:bg-transparent">
-            <TableHead className="text-zinc-400">Project</TableHead>
-            <TableHead className="text-zinc-400 hidden md:table-cell">Date</TableHead>
-            <TableHead className="text-zinc-400">Score</TableHead>
-            <TableHead className="text-zinc-400 hidden md:table-cell">Issues</TableHead>
-            <TableHead className="text-zinc-400">Status</TableHead>
-            <TableHead className="text-zinc-400 text-right">Actions</TableHead>
+          <TableRow className="border-zinc-200 dark:border-[#1f1f1f] hover:bg-transparent">
+            <TableHead className="text-zinc-600 dark:text-zinc-400">Project</TableHead>
+            <TableHead className="text-zinc-600 dark:text-zinc-400 hidden md:table-cell">Date</TableHead>
+            <TableHead className="text-zinc-600 dark:text-zinc-400">Score</TableHead>
+            <TableHead className="text-zinc-600 dark:text-zinc-400 hidden md:table-cell">Issues</TableHead>
+            <TableHead className="text-zinc-600 dark:text-zinc-400">Status</TableHead>
+            <TableHead className="text-zinc-600 dark:text-zinc-400 text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {scans.map(scan => (
             <TableRow
               key={scan.id}
-              className="border-[#1f1f1f] hover:bg-white/[0.02] cursor-pointer"
+              className="border-zinc-200 dark:border-[#1f1f1f] hover:bg-white/[0.02] cursor-pointer"
               onClick={() => router.push(`/scans/${scan.id}`)}
             >
               {/* Project name */}
-              <TableCell className="font-medium text-white">
+              <TableCell className="font-medium text-zinc-900 dark:text-white">
                 {scan.projects?.name ?? 'Untitled Project'}
               </TableCell>
 
               {/* Date */}
-              <TableCell className="text-zinc-400 text-sm hidden md:table-cell">
+              <TableCell className="text-zinc-600 dark:text-zinc-400 text-sm hidden md:table-cell">
                 {formatDate(scan.created_at)}
               </TableCell>
 
@@ -142,7 +142,7 @@ export default function ScanTable({ scans, isLoading = false }: ScanTableProps) 
                         {scan.critical_count} critical
                       </span>
                     )}
-                    <span className="text-zinc-500">
+                    <span className="text-zinc-500 dark:text-zinc-500">
                       {scan.total_vulnerabilities} total
                     </span>
                   </div>
@@ -160,7 +160,7 @@ export default function ScanTable({ scans, isLoading = false }: ScanTableProps) 
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-white/5"
+                    className="h-8 w-8 p-0 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:text-white hover:bg-white/5"
                     onClick={() => router.push(`/scans/${scan.id}`)}
                   >
                     <Eye className="h-3.5 w-3.5" />
@@ -168,7 +168,7 @@ export default function ScanTable({ scans, isLoading = false }: ScanTableProps) 
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-8 w-8 p-0 text-zinc-400 hover:text-white hover:bg-white/5"
+                    className="h-8 w-8 p-0 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:text-white hover:bg-white/5"
                     onClick={() => router.push('/scans/new')}
                   >
                     <RotateCcw className="h-3.5 w-3.5" />

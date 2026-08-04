@@ -230,7 +230,7 @@ export default function ScanDetailPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-4">
           <Shield className="h-12 w-12 text-indigo-500 animate-pulse" />
-          <p className="text-zinc-400">Loading scan...</p>
+          <p className="text-zinc-600 dark:text-zinc-400">Loading scan...</p>
         </div>
       </div>
     )
@@ -240,7 +240,7 @@ export default function ScanDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <XCircle className="h-12 w-12 text-red-400" />
-        <p className="text-white font-semibold">Scan not found or missing status data</p>
+        <p className="text-zinc-900 dark:text-white font-semibold">Scan not found or missing status data</p>
         <Button variant="outline" onClick={() => router.push('/scans')}>
           Back to Scans
         </Button>
@@ -253,13 +253,13 @@ export default function ScanDetailPage() {
   if (report.status !== 'completed' && report.status !== 'failed') {
     return (
       <div className="max-w-2xl mx-auto py-12">
-        <div className="bg-[#111111] border border-[#1f1f1f] rounded-2xl p-8 space-y-8">
+        <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-2xl p-8 space-y-8">
           {/* Icon + Title */}
           <div className="text-center space-y-3">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500/20">
               <Shield className="h-8 w-8 text-indigo-400 animate-pulse" />
             </div>
-            <h1 className="text-xl font-bold text-white">
+            <h1 className="text-xl font-bold text-zinc-900 dark:text-white">
               {getStatusTitle(report.status)}
             </h1>
           </div>
@@ -277,7 +277,7 @@ export default function ScanDetailPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-zinc-500 hover:text-zinc-300"
+              className="text-zinc-500 dark:text-zinc-500 hover:text-zinc-300"
               onClick={() => router.push('/scans')}
             >
               ← Back to scans
@@ -293,14 +293,14 @@ export default function ScanDetailPage() {
   if (report.status === 'failed') {
     return (
       <div className="max-w-2xl mx-auto py-12">
-        <div className="bg-[#111111] border border-red-500/20 rounded-2xl p-8 text-center space-y-4">
+        <div className="bg-white dark:bg-[#111111] border border-red-500/20 rounded-2xl p-8 text-center space-y-4">
           <XCircle className="h-12 w-12 text-red-400 mx-auto" />
-          <h1 className="text-xl font-bold text-white">Scan Failed</h1>
-          <p className="text-zinc-400 text-sm">
+          <h1 className="text-xl font-bold text-zinc-900 dark:text-white">Scan Failed</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 text-sm">
             {report.error_message ?? 'An unexpected error occurred.'}
           </p>
           <Button
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            className="bg-indigo-600 hover:bg-indigo-700 text-zinc-900 dark:text-white"
             onClick={() => router.push('/scans/new')}
           >
             Try Again
@@ -318,10 +318,10 @@ export default function ScanDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
             {report.projects?.name ?? 'Security Report'}
           </h1>
-          <p className="text-zinc-400 text-sm mt-1">
+          <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">
             {new Date(report.created_at).toLocaleDateString('en-US', {
               month: 'long', day: 'numeric', year: 'numeric',
               hour: '2-digit', minute: '2-digit',
@@ -333,14 +333,14 @@ export default function ScanDetailPage() {
             variant="outline"
             size="sm"
             onClick={handleShare}
-            className="border-[#1f1f1f] text-zinc-300 hover:bg-white/5 bg-transparent"
+            className="border-zinc-200 dark:border-[#1f1f1f] text-zinc-300 hover:bg-white/5 bg-transparent"
           >
             <Share2 className="h-4 w-4 mr-2" />
             {copied ? 'Copied!' : 'Share'}
           </Button>
           <Button
             size="sm"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            className="bg-indigo-600 hover:bg-indigo-700 text-zinc-900 dark:text-white"
             onClick={() => router.push('/scans/new')}
           >
             <RotateCcw className="h-4 w-4 mr-2" />
@@ -350,7 +350,7 @@ export default function ScanDetailPage() {
       </div>
 
       {/* Score + Stats row */}
-      <div className="bg-[#111111] border border-[#1f1f1f] rounded-2xl p-6">
+      <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-2xl p-6">
         <div className="flex flex-col md:flex-row items-center gap-8">
           {/* Score circle */}
           <SecurityScore
@@ -385,18 +385,18 @@ export default function ScanDetailPage() {
           {/* Scan metadata */}
           <div className="space-y-3 text-sm min-w-[140px]">
             <div>
-              <p className="text-zinc-500 text-xs">Files Scanned</p>
-              <p className="text-white font-semibold">{report.files_scanned ?? 0}</p>
+              <p className="text-zinc-500 dark:text-zinc-500 text-xs">Files Scanned</p>
+              <p className="text-zinc-900 dark:text-white font-semibold">{report.files_scanned ?? 0}</p>
             </div>
             <div>
-              <p className="text-zinc-500 text-xs">Lines Scanned</p>
-              <p className="text-white font-semibold">
+              <p className="text-zinc-500 dark:text-zinc-500 text-xs">Lines Scanned</p>
+              <p className="text-zinc-900 dark:text-white font-semibold">
                 {(report.lines_scanned ?? 0).toLocaleString()}
               </p>
             </div>
             <div>
-              <p className="text-zinc-500 text-xs">Total Issues</p>
-              <p className="text-white font-semibold">{report.total_vulnerabilities ?? 0}</p>
+              <p className="text-zinc-500 dark:text-zinc-500 text-xs">Total Issues</p>
+              <p className="text-zinc-900 dark:text-white font-semibold">{report.total_vulnerabilities ?? 0}</p>
             </div>
           </div>
         </div>
@@ -405,9 +405,9 @@ export default function ScanDetailPage() {
       {/* Vulnerability List */}
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
             Vulnerabilities
-            <Badge className="ml-2 bg-zinc-800 text-zinc-300 border-0">
+            <Badge className="ml-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-300 border-0">
               {filteredVulns.length}
             </Badge>
           </h2>
@@ -416,23 +416,23 @@ export default function ScanDetailPage() {
           <div className="flex items-center gap-3">
             {/* Search */}
             <div className="relative">
-              <Search className="h-4 w-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="h-4 w-4 text-zinc-500 dark:text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <Input
                 placeholder="Search vulnerabilities..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="pl-9 h-9 bg-[#111111] border-[#1f1f1f] text-white placeholder:text-zinc-600 text-sm w-48"
+                className="pl-9 h-9 bg-white dark:bg-[#111111] border-zinc-200 dark:border-[#1f1f1f] text-zinc-900 dark:text-white placeholder:text-zinc-600 text-sm w-48"
               />
             </div>
 
             {/* Severity tabs */}
             <Tabs value={severityFilter} onValueChange={setSeverityFilter}>
-              <TabsList className="bg-[#111111] border border-[#1f1f1f] h-9">
+              <TabsList className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] h-9">
                 {['all', 'critical', 'high', 'medium', 'low'].map(s => (
                   <TabsTrigger
                     key={s}
                     value={s}
-                    className="capitalize text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-white h-7"
+                    className="capitalize text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-zinc-900 dark:text-white h-7"
                   >
                     {s}
                   </TabsTrigger>
@@ -444,7 +444,7 @@ export default function ScanDetailPage() {
 
         {/* Cards */}
         {filteredVulns.length === 0 ? (
-          <div className="text-center py-12 text-zinc-500">
+          <div className="text-center py-12 text-zinc-500 dark:text-zinc-500">
             <Shield className="h-10 w-10 mx-auto mb-3 text-zinc-700" />
             <p>No vulnerabilities match your filter</p>
           </div>
@@ -459,7 +459,7 @@ export default function ScanDetailPage() {
 
       {/* Back link */}
       <div className="pb-8">
-        <Link href="/scans" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+        <Link href="/scans" className="text-sm text-zinc-500 dark:text-zinc-500 hover:text-zinc-300 transition-colors">
           ← Back to all scans
         </Link>
       </div>

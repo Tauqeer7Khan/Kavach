@@ -103,7 +103,7 @@ export default function SecurityScore({
 
         {/* Score number in center */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className={`font-bold text-white ${cfg.fontSize}`}>
+          <span className={`font-bold text-zinc-900 dark:text-white ${cfg.fontSize}`}>
             {displayScore}
           </span>
         </div>
@@ -118,7 +118,7 @@ export default function SecurityScore({
         </span>
       )}
       {showLabel && (
-        <span className="text-xs text-zinc-400">{label}</span>
+        <span className="text-xs text-zinc-600 dark:text-zinc-400">{label}</span>
       )}
     </div>
   )

@@ -29,7 +29,7 @@ function sourceIcon(type: string) {
 }
 
 function scoreColor(score: number | null): string {
-  if (score === null) return 'text-zinc-500'
+  if (score === null) return 'text-zinc-500 dark:text-zinc-500'
   if (score >= 80) return 'text-green-400'
   if (score >= 60) return 'text-yellow-400'
   return 'text-red-400'
@@ -50,13 +50,13 @@ export default async function ProjectsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Projects</h1>
-          <p className="text-zinc-400 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Projects</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">
             {projects?.length ?? 0} projects
           </p>
         </div>
         <Link href="/scans/new">
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button className="bg-indigo-600 hover:bg-indigo-700 text-zinc-900 dark:text-white">
             <PlusCircle className="h-4 w-4 mr-2" />
             New Scan
           </Button>
@@ -76,30 +76,30 @@ export default async function ProjectsPage() {
           {(projects as Project[]).map(project => (
             <div
               key={project.id}
-              className="bg-[#111111] border border-[#1f1f1f] rounded-xl p-5 
-                         hover:border-zinc-700 transition-colors group"
+              className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-xl p-5 
+                         hover:border-zinc-200 dark:border-zinc-700 transition-colors group"
             >
               <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2 text-zinc-400">
+                <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
                   {sourceIcon(project.source_type)}
-                  <span className="text-xs text-zinc-500 capitalize">
+                  <span className="text-xs text-zinc-500 dark:text-zinc-500 capitalize">
                     {project.source_type}
                   </span>
                 </div>
                 {project.primary_language && (
-                  <Badge className="bg-zinc-800 text-zinc-300 border-0 text-xs">
+                  <Badge className="bg-zinc-100 dark:bg-zinc-800 text-zinc-300 border-0 text-xs">
                     {project.primary_language}
                   </Badge>
                 )}
               </div>
 
-              <h3 className="font-semibold text-white mb-1 
+              <h3 className="font-semibold text-zinc-900 dark:text-white mb-1 
                              group-hover:text-indigo-300 transition-colors">
                 {project.name}
               </h3>
 
               <div className="flex items-center justify-between mt-4">
-                <div className="text-xs text-zinc-500">
+                <div className="text-xs text-zinc-500 dark:text-zinc-500">
                   {project.total_scans ?? 0} scans
                 </div>
                 {project.last_scan_score !== null && (
@@ -109,13 +109,13 @@ export default async function ProjectsPage() {
                 )}
               </div>
 
-              <div className="mt-4 pt-3 border-t border-[#1f1f1f]">
+              <div className="mt-4 pt-3 border-t border-zinc-200 dark:border-[#1f1f1f]">
                 <Link href="/scans/new">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full text-xs text-zinc-400 
-                               hover:text-white hover:bg-white/5"
+                    className="w-full text-xs text-zinc-600 dark:text-zinc-400 
+                               hover:text-zinc-900 dark:text-white hover:bg-white/5"
                   >
                     Scan Now →
                   </Button>

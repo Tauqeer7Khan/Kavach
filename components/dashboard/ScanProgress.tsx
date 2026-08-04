@@ -68,12 +68,12 @@ export default function ScanProgress({
                     ? 'bg-green-500 border-green-500'
                     : state === 'active'
                     ? 'bg-indigo-500/20 border-indigo-500 animate-pulse'
-                    : 'bg-[#0a0a0a] border-[#1f1f1f]'
+                    : 'bg-[#FAFAF9] dark:bg-[#0a0a0a] border-zinc-200 dark:border-[#1f1f1f]'
                   }
                 `}
               >
                 {state === 'done' ? (
-                  <Check className="h-4 w-4 text-white" />
+                  <Check className="h-4 w-4 text-zinc-900 dark:text-white" />
                 ) : state === 'active' ? (
                   <Loader2 className="h-4 w-4 text-indigo-400 animate-spin" />
                 ) : (
@@ -100,7 +100,7 @@ export default function ScanProgress({
       {/* Progress bar */}
       <div className="space-y-2">
         <Progress value={progress} className="h-2 bg-[#1f1f1f]" />
-        <div className="flex justify-between text-xs text-zinc-500">
+        <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-500">
           <span>{progressMessage || 'Processing...'}</span>
           <span>{progress}%</span>
         </div>
@@ -108,7 +108,7 @@ export default function ScanProgress({
 
       {/* Queue position */}
       {status === 'queued' && queuePosition && queuePosition > 0 && (
-        <div className="text-center text-sm text-zinc-400">
+        <div className="text-center text-sm text-zinc-600 dark:text-zinc-400">
           Position{' '}
           <span className="text-indigo-400 font-semibold">{queuePosition}</span>{' '}
           in queue · Estimated wait:{' '}
