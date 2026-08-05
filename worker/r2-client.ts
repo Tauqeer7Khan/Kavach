@@ -2,21 +2,21 @@ import { S3Client, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand }
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const accountId = process.env.R2_ACCOUNT_ID;
+const endpoint = process.env.R2_ENDPOINT;
 const accessKeyId = process.env.R2_ACCESS_KEY_ID;
 const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
 const bucketName = process.env.R2_BUCKET_NAME;
 
-if (!accountId || !accessKeyId || !secretAccessKey || !bucketName) {
-  throw new Error('Missing required R2 environment variables.');
+if (!endpoint || !accessKeyId || !secretAccessKey || !bucketName) {
+  throw new Error('Missing required R2 environment variables. Need: R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME');
 }
 
 const s3Client = new S3Client({
   region: 'auto',
-  endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+  endpoint: endpoint,
   credentials: {
-    accessKeyId,
-    secretAccessKey,
+    accessKeyId: accessKeyId!,
+    secretAccessKey: secretAccessKey!,
   },
 });
 

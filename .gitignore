@@ -83,3 +83,6 @@ tmp/
 # local databases / misc
 *.sqlite
 *.sqlite3
+# Backup files
+*.backup
+*.bak

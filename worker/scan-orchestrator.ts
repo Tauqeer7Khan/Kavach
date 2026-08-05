@@ -10,6 +10,8 @@ import { runAIAnalysis, checkOllamaHealth, analyzeFileWithAI } from './analyzers
 import { calculateSecurityScore, getScoreLabel } from './reporters/score-calculator';
 import { deduplicateVulnerabilities, assignVulnCodes } from './reporters/vulnerability-mapper';
 import { getFilesToScan, detectLanguagesInDirectory } from './parsers/language-detector';
+import { cloneRepository } from './lib/git';
+import { downloadR2Files } from './lib/r2-utils';
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -41,9 +43,27 @@ export async function orchestrateScan(job: Job<ScanJob>) {
     // 5. Handle different source types
     console.log(`📡 Processing source type: ${sourceType}`);
     if (sourceType === 'github') {
-      console.log('   [Day 4] TODO: Clone GitHub repository here');
+      if (!job.data.repoUrl) {
+        throw new Error("GitHub repository URL is missing");
+      }
+      
+      const cloneRes = await cloneRepository(job.data.repoUrl, tempDir, 100);
+      
+      if (!cloneRes.success) {
+        throw new Error(cloneRes.error || "Failed to clone GitHub repository");
+      }
+      
+      console.log(`✅ Cloned successfully: ${cloneRes.totalFiles} code files (${cloneRes.totalSize?.toFixed(2)} MB)`);
     } else if (sourceType === 'upload') {
-      console.log('   [Day 4] TODO: Download files from R2 here');
+      if (!job.data.r2Keys || job.data.r2Keys.length === 0) {
+        throw new Error("No files were provided for the upload scan.");
+      }
+      
+      const downloadRes = await downloadR2Files(job.data.r2Keys, tempDir);
+      
+      if (!downloadRes.success) {
+        throw new Error(downloadRes.error || "Failed to download files from storage.");
+      }
     } else if (sourceType === 'paste') {
       if (job.data.pastedCode) {
         let ext = 'js';
