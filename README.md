@@ -46,7 +46,7 @@ Common vulnerabilities found in AI-generated code:
 | Database | Supabase (PostgreSQL) | Free tier |
 | Queue | Upstash Redis + BullMQ | Free tier |
 | Storage | Cloudflare R2 | Free tier (10GB) |
-| AI Engine | Ollama (Llama 3.1 8B) — runs locally | $0 |
+| AI Engine | Ollama (Qwen 2.5 Coder 14B) — runs locally | $0 |
 | Static Scan | Semgrep | Open source |
 | Secret Scan | Gitleaks | Open source |
 | Backup AI | Google Gemini API | Free tier |
@@ -109,7 +109,7 @@ Fill in your API keys and credentials in `.env.local`.
 ```bash
 brew install ollama
 ollama serve
-ollama pull llama3.1:8b
+ollama pull qwen2.5-coder:14b
 ```
 
 **6. Run the frontend**
@@ -187,7 +187,7 @@ The 7-Day Build Plan
 - Integrated Semgrep for static analysis (OWASP Top 10 detection)
 - Integrated Gitleaks for hardcoded secret detection
 - Built regex-based secret scanner (10+ patterns as fallback)
-- Integrated Ollama running Llama 3.1 8B locally for AI analysis
+- Integrated Ollama running Qwen 2.5 Coder 14B (code-specialized) locally for AI analysis
 - Added Google Gemini API as automatic fallback
 - Built security scoring system (0-100 with A-F grading)
 - Built vulnerability deduplication with fuzzy matching
@@ -233,7 +233,7 @@ The 7-Day Build Plan
 - Connected landing page CTAs to /login flow
 - Beta signup redirects to /login after success
 - Created .vercelignore to exclude worker + docs from deployment
-- Created worker/start.sh startup script (auto-installs Ollama, Semgrep, Gitleaks + downloads Llama 3.1 model)
+- Created worker/start.sh startup script (auto-installs Ollama, Semgrep, Gitleaks + downloads Qwen 2.5 Coder 14B model)
 - Updated .env.example with all required variables (frontend + worker)
 - Created comprehensive E2E testing checklist (docs/testing-checklist.md)
 - Production build: zero errors, zero warnings, 17 static pages

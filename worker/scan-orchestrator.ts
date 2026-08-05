@@ -41,16 +41,27 @@ export async function orchestrateScan(job: Job<ScanJob>) {
     // 5. Handle different source types
     console.log(`📡 Processing source type: ${sourceType}`);
     if (sourceType === 'github') {
-      console.log('   [Day 4] Would clone GitHub repository here');
+      console.log('   [Day 4] TODO: Clone GitHub repository here');
     } else if (sourceType === 'upload') {
-      console.log('   [Day 4] Would download files from R2 here');
+      console.log('   [Day 4] TODO: Download files from R2 here');
     } else if (sourceType === 'paste') {
-      console.log('   [Day 4] Would write pasted code to files here');
+      if (job.data.pastedCode) {
+        let ext = 'js';
+        if (job.data.language) {
+          const lang = job.data.language.toLowerCase();
+          if (lang === 'python') ext = 'py';
+          else if (lang === 'go') ext = 'go';
+          else if (lang === 'java') ext = 'java';
+          else if (lang === 'php') ext = 'php';
+          else if (lang === 'typescript' || lang === 'ts') ext = 'ts';
+          else if (lang === 'csharp' || lang === 'c#') ext = 'cs';
+          else ext = lang;
+        }
+        const filePath = path.join(tempDir, `code.${ext}`);
+        await fs.writeFile(filePath, job.data.pastedCode);
+        console.log(`📝 Wrote pasted code to code.${ext}`);
+      }
     }
-    
-    // Create a sample.js file with dummy content
-    const sampleFilePath = path.join(tempDir, 'sample.js');
-    await fs.writeFile(sampleFilePath, 'const secret = "SUPER_SECRET_TOKEN";\nfunction evaluate(code) { eval(code); }\n');
 
     // ═══════════════════════════════════════════
     // STEP A: Detect files and languages
@@ -355,6 +366,8 @@ export async function orchestrateScan(job: Job<ScanJob>) {
         .from('scans')
         .update({
           status: 'failed',
+          security_score: null,
+          total_vulnerabilities: 0,
           error_message: error.message || 'Unknown error occurred during scan',
         })
         .eq('id', scanId);

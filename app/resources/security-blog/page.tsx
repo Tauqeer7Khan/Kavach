@@ -28,7 +28,7 @@ export default function SecurityBlogPage() {
             title: "Local AI vs Cloud AI for Security Scanning",
             date: "July 15, 2026",
             readTime: "6 min read",
-            excerpt: "Why KAVACH uses a local instance of Llama 3.1. Learn the privacy implications of sending your proprietary, unreleased source code to third-party APIs for vulnerability scanning.",
+            excerpt: "Why KAVACH uses a local instance of Qwen 2.5 Coder. Learn the privacy implications of sending your proprietary, unreleased source code to third-party APIs for vulnerability scanning.",
             gradient: "from-emerald-500/20 to-teal-500/20"
         },
         {

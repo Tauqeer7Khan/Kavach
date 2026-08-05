@@ -10,7 +10,7 @@ CREATE TABLE users (
     github_username VARCHAR(100),
     plan VARCHAR(20) DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'enterprise')),
     scans_used_this_month INTEGER DEFAULT 0,
-    scans_limit INTEGER DEFAULT 5,
+    scans_limit INTEGER DEFAULT 15,
     last_reset_date DATE DEFAULT CURRENT_DATE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

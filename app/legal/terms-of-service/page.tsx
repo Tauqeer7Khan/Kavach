@@ -54,7 +54,7 @@ export default function TermsOfServicePage() {
                         <ul className="pl-6 space-y-2 list-disc text-zinc-700 dark:text-zinc-300 mb-4">
                             <li>Static analysis (Semgrep)</li>
                             <li>Secret detection (Gitleaks)</li>
-                            <li>AI-powered review (Ollama Llama 3.1)</li>
+                            <li>AI-powered review (Ollama Qwen 2.5 Coder)</li>
                         </ul>
                     </motion.div>
 

@@ -33,7 +33,7 @@ console.log('══════════════════════�
 console.log('🛡️  KAVACH Worker Started');
 console.log('═══════════════════════════════════════════');
 console.log('💻 Running on: MacBook Air M5 (Local)');
-console.log('🤖 AI Model: llama3.1:8b (Ollama)');
+console.log('🤖 AI Model: qwen2.5-coder:14b (Ollama)');
 console.log('📡 Redis: Connected');
 console.log('🗄️  Supabase: Connected');
 console.log('⏳ Waiting for scan jobs...');

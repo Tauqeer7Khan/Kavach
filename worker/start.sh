@@ -21,10 +21,10 @@ fi
 echo ""
 
 # ── Check Model ──
-echo "🔍 Checking Llama 3.1 8B model..."
-if ! ollama list 2>/dev/null | grep -q "llama3.1:8b"; then
-  echo "⬇️  Pulling Llama 3.1 8B (this may take a while)..."
-  ollama pull llama3.1:8b
+echo "🔍 Checking Qwen 2.5 Coder 14B model..."
+if ! ollama list 2>/dev/null | grep -q "qwen2.5-coder:14b"; then
+  echo "⬇️  Pulling Qwen 2.5 Coder 14B (this may take a while)..."
+  ollama pull qwen2.5-coder:14b
   echo "✅ Model downloaded"
 else
   echo "✅ Model already available"

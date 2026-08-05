@@ -82,25 +82,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="font-mono text-[10px] bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-300 px-2 py-0.5 rounded uppercase tracking-wider">
               {user?.plan?.toUpperCase() || 'FREE'} PLAN
             </span>
-            <span className="font-mono text-[10px] text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 cursor-pointer">
-              Upgrade
-            </span>
+            <Link
+                href="/settings"
+                className="font-mono text-[10px] text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 cursor-pointer"
+              >
+                Upgrade
+              </Link>
           </div>
 
           <p className="font-mono text-xs text-zinc-600 dark:text-zinc-400 mb-2">Scans this month</p>
           <div className="h-1.5 bg-zinc-200 dark:bg-white/10 rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-[#7C3AED] to-[#8B5CF6] rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, ((user?.scans_used_this_month || 0) / (user?.scans_limit || 5)) * 100)}%` }}
+              style={{ width: `${Math.min(100, ((user?.scans_used_this_month || 0) / (user?.scans_limit || 15)) * 100)}%` }}
             />
           </div>
           
           <div className="mt-2 flex justify-between">
             <span className="font-mono text-xs text-zinc-900 dark:text-white">
-              {user?.scans_used_this_month || 0} of {user?.scans_limit || 5}
+              {user?.scans_used_this_month || 0} of {user?.scans_limit || 15}
             </span>
             <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">
-              {Math.round(((user?.scans_used_this_month || 0) / (user?.scans_limit || 5)) * 100)}%
+              {Math.round(((user?.scans_used_this_month || 0) / (user?.scans_limit || 15)) * 100)}%
             </span>
           </div>
         </div>

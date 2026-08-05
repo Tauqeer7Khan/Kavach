@@ -45,7 +45,7 @@ costs at zero during the initial launch phase.
 - **Cost:** $0 (uses existing hardware)
 
 ### AI Analysis Engine (Ollama — Local)
-- **Model:** Llama 3.1 8B (Q4 quantized)
+- **Model:** Qwen 2.5 Coder 14B (Q4 quantized, code-specialized)
 - **Runtime:** Ollama running locally on MacBook
 - **RAM Usage:** ~5-6 GB
 - **Inference Speed:** ~15-25 tokens/second

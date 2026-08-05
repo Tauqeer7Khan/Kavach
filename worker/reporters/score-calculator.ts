@@ -1,6 +1,9 @@
 import { ParsedVulnerability, ScanGrade } from '../../types';
 
 export function calculateSecurityScore(vulnerabilities: ParsedVulnerability[]): { score: number, grade: ScanGrade } {
+  if (!vulnerabilities || vulnerabilities.length === 0) {
+    return { score: 100, grade: 'A+' };
+  }
   let criticalCount = 0;
   let highCount = 0;
   let mediumCount = 0;

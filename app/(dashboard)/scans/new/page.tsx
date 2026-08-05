@@ -34,7 +34,7 @@ export default function NewScanPage() {
   const [projectName, setProjectName] = useState<string>('My Project')
 
   // Active tab
-  const [activeTab, setActiveTab] = useState<'upload' | 'github' | 'paste'>('upload')
+  const [activeTab, setActiveTab] = useState<'upload' | 'github' | 'paste'>('paste')
 
   const handleFileUpload = useCallback(async (files: File[]): Promise<void> => {
     if (files.length === 0) return
@@ -131,29 +131,44 @@ export default function NewScanPage() {
 
       <div className="bg-white dark:bg-[#0f0f10] border border-zinc-200 dark:border-[#27272A] rounded-2xl p-6 md:p-8 unique-card">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'upload' | 'github' | 'paste')} className="flex flex-col w-full">
-          <TabsList className="grid grid-cols-3 w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 p-1 rounded-lg mb-6">
-            <TabsTrigger 
-              value="upload" 
-              className="font-heading font-medium data-[state=active]:bg-gradient-to-b data-[state=active]:from-[#8B5CF6] data-[state=active]:to-[#7C3AED] data-[state=active]:text-zinc-900 dark:text-white data-[state=active]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
+          <TabsList className="grid grid-cols-3 w-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 p-1 rounded-lg mb-2">
+            {/* Upload — Coming Soon */}
+            <div
+              title="Available soon — currently in development"
+              className="relative flex items-center justify-center gap-1 opacity-50 cursor-not-allowed px-3 py-1.5 rounded-md text-sm font-heading font-medium text-zinc-500 dark:text-zinc-400"
             >
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Files
-            </TabsTrigger>
-            <TabsTrigger 
-              value="github" 
-              className="font-heading font-medium data-[state=active]:bg-gradient-to-b data-[state=active]:from-[#8B5CF6] data-[state=active]:to-[#7C3AED] data-[state=active]:text-zinc-900 dark:text-white data-[state=active]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
+              <Upload className="h-4 w-4" />
+              <span>Upload Files</span>
+              <span className="ml-1 text-[9px] font-bold tracking-wide uppercase bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded px-1 py-px leading-none">
+                Soon
+              </span>
+            </div>
+
+            {/* GitHub — Coming Soon */}
+            <div
+              title="Available soon — currently in development"
+              className="relative flex items-center justify-center gap-1 opacity-50 cursor-not-allowed px-3 py-1.5 rounded-md text-sm font-heading font-medium text-zinc-500 dark:text-zinc-400"
             >
-              <GithubIcon className="h-4 w-4 mr-2" size={16} />
-              GitHub Repo
-            </TabsTrigger>
-            <TabsTrigger 
-              value="paste" 
-              className="font-heading font-medium data-[state=active]:bg-gradient-to-b data-[state=active]:from-[#8B5CF6] data-[state=active]:to-[#7C3AED] data-[state=active]:text-zinc-900 dark:text-white data-[state=active]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
+              <GithubIcon className="h-4 w-4" size={16} />
+              <span>GitHub Repo</span>
+              <span className="ml-1 text-[9px] font-bold tracking-wide uppercase bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded px-1 py-px leading-none">
+                Soon
+              </span>
+            </div>
+
+            {/* Paste Code — Active */}
+            <TabsTrigger
+              value="paste"
+              className="font-heading font-medium data-[state=active]:bg-gradient-to-b data-[state=active]:from-[#8B5CF6] data-[state=active]:to-[#7C3AED] data-[state=active]:text-white data-[state=active]:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
             >
               <Code2 className="h-4 w-4 mr-2" />
               Paste Code
             </TabsTrigger>
           </TabsList>
+
+          <p className="text-xs text-zinc-500 dark:text-zinc-500 font-mono mb-4">
+            💡 Currently supporting paste. GitHub &amp; Upload coming in v2!
+          </p>
 
           <TabsContent value="upload" className="mt-0 block w-full">
             {isUploading ? (

@@ -15,7 +15,7 @@ export default function FAQSection() {
         },
         {
             q: "Is my code sent to OpenAI?",
-            a: "No. Our AI evaluation layer uses local open-source models (Llama 3.1) to analyze logic flaws. Your code never leaves our secure, ephemeral infrastructure and is deleted immediately after scanning."
+            a: "No. Our AI evaluation layer uses local open-source models (Qwen 2.5 Coder) to analyze logic flaws. Your code never leaves our secure, ephemeral infrastructure and is deleted immediately after scanning."
         },
         {
             q: "What languages do you support?",

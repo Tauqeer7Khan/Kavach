@@ -93,7 +93,7 @@ export default function PrivacyPolicyPage() {
                     >
                         <h2 className="font-heading text-2xl font-bold mt-10 mb-4">4. Data Storage and Security</h2>
                         <ul className="pl-6 space-y-2 list-disc text-zinc-700 dark:text-zinc-300 mb-4">
-                            <li><strong>Local AI Processing</strong>: Code is analyzed locally using Ollama (Llama 3.1 8B). Your code is NOT sent to third-party AI services like OpenAI or Anthropic.</li>
+                            <li><strong>Local AI Processing</strong>: Code is analyzed locally using Ollama (Qwen 2.5 Coder 14B). Your code is NOT sent to third-party AI services like OpenAI or Anthropic.</li>
                             <li><strong>Encrypted Storage</strong>: All data is encrypted at rest and in transit.</li>
                             <li><strong>File Storage</strong>: Uploaded files stored on Cloudflare R2 with access controls.</li>
                             <li><strong>Database</strong>: PostgreSQL via Supabase with Row Level Security (RLS).</li>

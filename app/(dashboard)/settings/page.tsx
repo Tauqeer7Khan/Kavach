@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Mail, User } from 'lucide-react'
 import { GithubIcon } from '@/components/shared/GithubIcon'
+import { CouponSection } from '@/components/settings/CouponSection'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -22,7 +23,7 @@ export default async function SettingsPage() {
     .single()
 
   const scansUsed    = profile?.scans_used_this_month ?? 0
-  const scansLimit   = profile?.scans_limit ?? 5
+  const scansLimit   = profile?.scans_limit ?? 15
   const scansPercent = Math.round((scansUsed / scansLimit) * 100)
 
   return (
@@ -124,6 +125,9 @@ export default async function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Coupon Code Section */}
+      <CouponSection />
     </div>
   )
 }

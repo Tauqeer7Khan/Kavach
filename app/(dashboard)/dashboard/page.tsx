@@ -81,7 +81,7 @@ export default async function DashboardPage() {
 
   const { scans, stats } = await getDashboardData(user.id)
   const displayName = profile?.name ?? user.email?.split('@')[0] ?? 'there'
-  const scansRemaining = (profile?.scans_limit ?? 5) - (profile?.scans_used_this_month ?? 0)
+  const scansRemaining = (profile?.scans_limit ?? 15) - (profile?.scans_used_this_month ?? 0)
 
   return (
     <div className="space-y-8">
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 text-sm text-amber-300 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
           You have <strong>{scansRemaining}</strong> of{' '}
-          <strong>{profile?.scans_limit ?? 5}</strong> free scans remaining this month.
+          <strong>{profile?.scans_limit ?? 15}</strong> free scans remaining this month.
         </div>
       )}
 

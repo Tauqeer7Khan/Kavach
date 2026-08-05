@@ -12,7 +12,7 @@ export default function FeaturesPage() {
     const features = [
         { icon: FileSearch, title: 'Static Analysis', desc: 'Semgrep-powered pattern detection to catch common syntax and structural vulnerabilities instantly.', benefit: 'Lightning fast initial scan' },
         { icon: Key, title: 'Secret Detection', desc: 'Gitleaks integration plus custom regex to find API keys, passwords, and tokens before they hit production.', benefit: 'Prevents leaked credentials' },
-        { icon: Brain, title: 'AI Deep Review', desc: 'Local Llama 3.1 analyzes complex logic flaws and context-dependent vulnerabilities that static tools miss.', benefit: 'Understands code intent' },
+        { icon: Brain, title: 'AI Deep Review', desc: 'Local Qwen 2.5 Coder analyzes complex logic flaws and context-dependent vulnerabilities that static tools miss.', benefit: 'Understands code intent' },
         { icon: Shield, title: 'Security Scoring', desc: 'Get a clear 0-100 score and A-F grading for your repository to track improvements over time.', benefit: 'Quantifiable metrics' },
         { icon: CheckCircle2, title: 'Fix Suggestions', desc: 'Receive exact fixed code snippets along with detailed AI explanations on why the fix is necessary.', benefit: 'One-click remediation' },
         { icon: List, title: 'OWASP Top 10 Mapping', desc: 'Vulnerabilities are automatically categorized according to the OWASP Top 10 framework.', benefit: 'Compliance ready' },

@@ -41,7 +41,7 @@ export default function HeroSection() {
 
                 <Reveal delay={400}>
                     <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm text-zinc-500 dark:text-zinc-400 font-mono">
-                        <div><span className="text-[#7C3AED] mr-2">•</span>Powered by Semgrep + Llama 3.1</div>
+                        <div><span className="text-[#7C3AED] mr-2">•</span>Powered by Semgrep + Qwen 2.5 Coder</div>
                         <div className="hidden sm:block opacity-30">|</div>
                         <div><span className="text-[#7C3AED] mr-2">•</span>Zero data retention</div>
                         <div className="hidden sm:block opacity-30">|</div>
