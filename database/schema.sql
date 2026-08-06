@@ -214,3 +214,49 @@ CREATE TRIGGER update_projects_updated_at
 BEFORE UPDATE ON projects
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
+
+-- 7. scan_file_contents
+CREATE TABLE IF NOT EXISTS scan_file_contents (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  scan_id         UUID REFERENCES scans(id) ON DELETE CASCADE,
+  user_id         UUID REFERENCES users(id) ON DELETE CASCADE,
+  file_path       TEXT NOT NULL,
+  file_content    TEXT NOT NULL,
+  language        VARCHAR(50),
+  line_count      INTEGER,
+  r2_key          TEXT,
+  expires_at      TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '48 hours'),
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_scan_file_contents_scan_id 
+  ON scan_file_contents(scan_id);
+
+CREATE INDEX IF NOT EXISTS idx_scan_file_contents_expires_at 
+  ON scan_file_contents(expires_at);
+
+-- 8. auto_fix_jobs
+CREATE TABLE IF NOT EXISTS auto_fix_jobs (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  scan_id               UUID REFERENCES scans(id) ON DELETE CASCADE,
+  user_id               UUID REFERENCES users(id) ON DELETE CASCADE,
+  status                VARCHAR(20) DEFAULT 'pending',
+  vulnerability_ids     JSONB DEFAULT '[]'::jsonb,
+  fixed_files           JSONB DEFAULT '[]'::jsonb,
+  total_vulns           INTEGER DEFAULT 0,
+  fixed_count           INTEGER DEFAULT 0,
+  skipped_count         INTEGER DEFAULT 0,
+  failed_count          INTEGER DEFAULT 0,
+  error_message         TEXT,
+  progress_percentage   INTEGER DEFAULT 0,
+  progress_message      TEXT,
+  started_at            TIMESTAMPTZ,
+  completed_at          TIMESTAMPTZ,
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_auto_fix_jobs_scan_id 
+  ON auto_fix_jobs(scan_id);
+
+CREATE INDEX IF NOT EXISTS idx_auto_fix_jobs_user_id 
+  ON auto_fix_jobs(user_id);

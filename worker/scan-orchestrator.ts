@@ -13,6 +13,42 @@ import { getFilesToScan, detectLanguagesInDirectory } from './parsers/language-d
 import { cloneRepository } from './lib/git';
 import { downloadR2Files } from './lib/r2-utils';
 
+// Recursive file finder — locates a file by name anywhere in a directory
+async function findFileByName(
+  dir: string,
+  targetName: string,
+  maxDepth: number = 10
+): Promise<string | null> {
+  if (maxDepth < 0) return null
+
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true })
+    
+    // Check current level first
+    for (const entry of entries) {
+      if (entry.isFile() && entry.name === targetName) {
+        return path.join(dir, entry.name)
+      }
+    }
+    
+    // Then recurse into subdirectories
+    for (const entry of entries) {
+      if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+        const found = await findFileByName(
+          path.join(dir, entry.name),
+          targetName,
+          maxDepth - 1
+        )
+        if (found) return found
+      }
+    }
+  } catch {
+    // Ignore permission errors etc
+  }
+
+  return null
+}
+
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -280,6 +316,150 @@ export async function orchestrateScan(job: Job<ScanJob>) {
       } else {
         console.log(`✅ Saved ${vulnsToInsert.length} vulnerabilities`);
       }
+    }
+
+    // ═══════════════════════════════════════════
+    // STEP L2: Save file contents for Auto-Fix (Pro/Enterprise only)
+    // ═══════════════════════════════════════════
+    try {
+      // Check user plan
+      const { data: userData } = await supabaseAdmin
+        .from('users')
+        .select('plan')
+        .eq('id', userId)
+        .single()
+
+      const isPro = userData?.plan === 'pro' || userData?.plan === 'enterprise'
+
+      if (isPro && codedVulns.length > 0) {
+        console.log('💾 Saving file contents for Auto-Fix (Pro user)...')
+
+        // Get unique file paths that have vulnerabilities
+        const vulnerableFilePaths = [...new Set(
+          codedVulns
+            .map(v => v.file_path)
+            .filter((fp): fp is string => !!fp)
+        )]
+
+        console.log(`💾 Attempting to save ${vulnerableFilePaths.length} unique files`)
+
+        const fileContentsToInsert = []
+
+        for (const filePath of vulnerableFilePaths) {
+          try {
+            // ─── Smart path resolution ─────────────────────
+            // Handle 3 cases:
+            //   1. Absolute path already: "/tmp/kavach-scans/xxx/foo.js"
+            //   2. Relative to tempDir:   "app/routes/index.js"
+            //   3. Just a filename:       "index.js"
+            
+            let fullPath: string
+            let relativePath: string
+
+            if (filePath.startsWith(tempDir)) {
+              // Case 1: absolute path within tempDir
+              fullPath = filePath
+              relativePath = path.relative(tempDir, filePath)
+            } else if (filePath.startsWith('/tmp/kavach-scans/')) {
+              // Case 1b: absolute path but from a different scan folder
+              // (should not happen but handle gracefully)
+              const parts = filePath.split('/')
+              const scanFolderIdx = parts.indexOf('kavach-scans')
+              if (scanFolderIdx !== -1 && parts.length > scanFolderIdx + 2) {
+                relativePath = parts.slice(scanFolderIdx + 2).join('/')
+                fullPath = path.join(tempDir, relativePath)
+              } else {
+                fullPath = filePath
+                relativePath = path.basename(filePath)
+              }
+            } else {
+              // Case 2 & 3: relative path or bare filename
+              relativePath = filePath
+              fullPath = path.join(tempDir, filePath)
+            }
+
+            // ─── Try to read the file ──────────────────────
+            let content: string
+            try {
+              content = await fs.readFile(fullPath, 'utf-8')
+            } catch (primaryReadError) {
+              // Fallback: try to find the file by name anywhere in tempDir
+              console.warn(`⚠️ File not at ${fullPath}, searching tempDir...`)
+              
+              const baseName = path.basename(filePath)
+              const foundPath = await findFileByName(tempDir, baseName)
+              
+              if (!foundPath) {
+                console.warn(`⚠️ Could not locate ${baseName} anywhere in ${tempDir}`)
+                continue
+              }
+              
+              console.log(`✅ Found ${baseName} at ${foundPath}`)
+              content = await fs.readFile(foundPath, 'utf-8')
+              fullPath = foundPath
+              relativePath = path.relative(tempDir, foundPath)
+            }
+
+            const lineCount = content.split('\n').length
+
+            // Detect language from extension
+            const ext = path.extname(relativePath).slice(1).toLowerCase()
+            const langMap: Record<string, string> = {
+              ts: 'typescript', tsx: 'typescript',
+              js: 'javascript', jsx: 'javascript',
+              mjs: 'javascript', cjs: 'javascript',
+              py: 'python', rb: 'ruby', go: 'go',
+              rs: 'rust', java: 'java', php: 'php',
+              cs: 'csharp', cpp: 'cpp', c: 'c',
+              swift: 'swift', kt: 'kotlin',
+              md: 'markdown', json: 'json',
+              yml: 'yaml', yaml: 'yaml', sql: 'sql',
+            }
+            const language = langMap[ext] ?? 'text'
+
+            // Store using the ORIGINAL filePath as the key
+            // so lookups from vulnerabilities table match
+            fileContentsToInsert.push({
+              scan_id: scanId,
+              user_id: userId,
+              file_path: filePath,      // Original path from vuln record
+              file_content: content,
+              language,
+              line_count: lineCount,
+              r2_key: job.data.r2Keys?.find(
+                (k: string) => k.includes(path.basename(filePath))
+              ) ?? null,
+              expires_at: new Date(
+                Date.now() + 48 * 60 * 60 * 1000
+              ).toISOString(),
+            })
+
+            console.log(`✅ Prepared file for save: ${relativePath} (${content.length} bytes)`)
+
+          } catch (fileReadError: any) {
+            console.warn(`⚠️ Skipping ${filePath}: ${fileReadError.message}`)
+          }
+        }
+
+        if (fileContentsToInsert.length > 0) {
+          const { error: fileInsertError } = await supabaseAdmin
+            .from('scan_file_contents')
+            .insert(fileContentsToInsert)
+
+          if (fileInsertError) {
+            console.error('❌ Failed to save file contents:', fileInsertError)
+          } else {
+            console.log(`✅ Saved ${fileContentsToInsert.length} file contents to database`)
+          }
+        } else {
+          console.warn('⚠️ No file contents to save — all reads failed')
+        }
+      } else if (!isPro) {
+        console.log('ℹ️ Free user — skipping file content storage for auto-fix')
+      }
+    } catch (fileStorageError: any) {
+      console.warn('⚠️ File content storage failed (non-critical):', fileStorageError.message)
+      // Never crash the scan because of this
     }
 
     // ═══════════════════════════════════════════

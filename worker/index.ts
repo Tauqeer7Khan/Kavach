@@ -4,6 +4,7 @@ dotenv.config();
 import { Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 import { orchestrateScan } from './scan-orchestrator';
+import { processAutoFixJob } from './auto-fixer';
 
 // Ensure redis connection string is provided
 const redisUrl = process.env.UPSTASH_REDIS_URL || '';
@@ -59,10 +60,33 @@ worker.on('failed', (job: Job | undefined, err: Error) => {
   console.error(`❌ Job ${job?.id} failed:`, err.message);
 });
 
+const AUTO_FIX_QUEUE = 'kavach-auto-fixes'
+
+const autoFixWorker = new Worker(
+  AUTO_FIX_QUEUE,
+  async (job: Job) => {
+    console.log(`\n🔧 Auto-fix job picked up: [ID: ${job.id}]`)
+    await processAutoFixJob(job.data.fixJobId)
+  },
+  {
+    connection,
+    concurrency: 1,
+  }
+)
+
+autoFixWorker.on('completed', (job: Job) => {
+  console.log(`✅ Auto-fix job ${job.id} completed`)
+})
+
+autoFixWorker.on('failed', (job: Job | undefined, err: Error) => {
+  console.error(`❌ Auto-fix job ${job?.id} failed:`, err.message)
+})
+
 // Graceful shutdown on SIGTERM and SIGINT
 async function gracefulShutdown(signal: string) {
   console.log(`\nReceived ${signal}, shutting down worker...`);
   await worker.close();
+  await autoFixWorker.close();
   connection.disconnect();
   console.log('Worker closed gracefully.');
   process.exit(0);

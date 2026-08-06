@@ -8,6 +8,8 @@ import {
   AlertTriangle, Info, XCircle, Search, Bot,
 } from 'lucide-react'
 import { AiFixPromptModal } from '@/components/scans/AiFixPromptModal'
+import { AutoFixButton, type FixJob } from '@/components/scans/AutoFixButton'
+import { DiffViewer }                 from '@/components/scans/DiffViewer'
 import { detectLanguage, type ScanReportForPrompt } from '@/lib/prompt-generator'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -42,6 +44,8 @@ interface Vulnerability {
   ai_fix_explanation: string | null
   why_ai_makes_this_mistake: string | null
   detection_method: string
+  is_fixed?: boolean
+  is_false_positive?: boolean
 }
 
 interface ScanReport {
@@ -104,6 +108,9 @@ export default function ScanDetailPage() {
   const [search, setSearch]           = useState<string>('')
   const [copied, setCopied]           = useState<boolean>(false)
   const [showPromptModal, setShowPromptModal] = useState<boolean>(false)
+  const [fixJob,          setFixJob]          = useState<FixJob | null>(null)
+  const [showDiffViewer,  setShowDiffViewer]  = useState(false)
+  const [userPlan,        setUserPlan]        = useState<'free'|'pro'|'enterprise'>('free')
 
   // ── Fetch report ─────────────────────────────────────────────────────────
 
@@ -171,6 +178,23 @@ export default function ScanDetailPage() {
     console.log('[Scan Page] scanId:', scanId)
     console.log('[Scan Page] Starting fetch...')
     
+    // Fetch user plan for tier check
+    const fetchUserPlan = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        const { data: userData } = await supabase
+          .from('users')
+          .select('plan')
+          .eq('id', user.id)
+          .single()
+        if (userData?.plan) {
+          setUserPlan(userData.plan as 'free' | 'pro' | 'enterprise')
+        }
+      } catch {}
+    }
+    fetchUserPlan()
+
     let stopped = false
     void fetchStatus()
 
@@ -369,6 +393,24 @@ export default function ScanDetailPage() {
             <Bot className="h-4 w-4" />
             Get AI Fix Prompt
           </Button>
+          <AutoFixButton
+            scanId={report.id}
+            userPlan={userPlan}
+            vulnerabilityIds={
+              (report.vulnerabilities ?? [])
+                .filter(v => !v.is_fixed && !v.is_false_positive)
+                .map(v => v.id)
+            }
+            vulnerabilityCount={
+              (report.vulnerabilities ?? [])
+                .filter(v => !v.is_fixed && !v.is_false_positive)
+                .length
+            }
+            onFixComplete={(job) => {
+              setFixJob(job)
+              setShowDiffViewer(true)
+            }}
+          />
           <Button
             size="sm"
             className="bg-indigo-600 hover:bg-indigo-700 text-zinc-900 dark:text-white"
@@ -501,6 +543,14 @@ export default function ScanDetailPage() {
         onClose={() => setShowPromptModal(false)}
         scanReport={promptReport}
       />
+      {fixJob && (
+        <DiffViewer
+          isOpen={showDiffViewer}
+          onClose={() => setShowDiffViewer(false)}
+          fixJob={fixJob}
+          scanId={report.id}
+        />
+      )}
     </div>
   )
 }
