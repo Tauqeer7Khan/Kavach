@@ -636,7 +636,7 @@ export async function processAutoFixJob(fixJobId: string): Promise<void> {
         .from('auto_fix_jobs')
         .update({
           progress_percentage: Math.round(10 + (80 * processedFiles / totalFiles)),
-          progress_message: `Fixing file ${processedFiles} of ${totalFiles}: ${filePath.split('/').pop()}`,
+          progress_message: `Fixing file ${processedFiles} of ${totalFiles}: ${filePath.split('/').pop()} (${fileVulns.length} ${fileVulns.length === 1 ? 'vulnerability' : 'vulnerabilities'})`,
         })
         .eq('id', fixJobId)
 
@@ -698,7 +698,7 @@ export async function processAutoFixJob(fixJobId: string): Promise<void> {
         skipped_count: skippedCount,
         failed_count: failedCount,
         progress_percentage: 100,
-        progress_message: `Done! Fixed ${fixedCount} files, skipped ${skippedCount}, failed ${failedCount}`,
+        progress_message: `Done! Fixed ${fixedCount} of ${totalFiles} files (${fixJob.total_vulns} vulnerabilities processed)`,
         completed_at: new Date().toISOString(),
       })
       .eq('id', fixJobId)

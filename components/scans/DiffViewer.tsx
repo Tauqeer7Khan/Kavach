@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
+import { translateFixError } from '@/lib/fix-error-messages'
 import type { FixJob, FixedFile } from './AutoFixButton'
 
 // ── Props ──────────────────────────────────────────────────
@@ -72,6 +73,19 @@ function FileCard({ file }: { file: FixedFile }) {
     file.status === 'fixed'
   )
 
+  const COLOR_MAP = {
+    skipped: {
+      title:   'text-amber-400',
+      icon:    'amber',
+      pillTxt: 'text-amber-500/80',
+    },
+    failed: {
+      title:   'text-red-400',
+      icon:    'red',
+      pillTxt: 'text-red-500/80',
+    },
+  } as const
+
   const diff      = React.useMemo(
     () => computeDiff(file.original_content, file.fixed_content),
     [file.original_content, file.fixed_content]
@@ -111,11 +125,15 @@ function FileCard({ file }: { file: FixedFile }) {
             {changedLines} lines changed
           </span>
         )}
-        {(file.status === 'skipped' || file.status === 'failed') && (
-          <span className="text-[10px] text-amber-500/80 ml-2 shrink-0 max-w-[200px] truncate">
-            {file.skip_reason}
-          </span>
-        )}
+        {(file.status === 'skipped' || file.status === 'failed') && (() => {
+          const friendly = translateFixError(file.skip_reason)
+          const colorObj = COLOR_MAP[file.status as 'skipped' | 'failed']
+          return (
+            <span className={`text-[10px] ${colorObj.pillTxt} ml-2 shrink-0 max-w-[220px] truncate`}>
+              {friendly.title}
+            </span>
+          )
+        })()}
       </button>
 
       {/* Diff content */}
@@ -157,29 +175,49 @@ function FileCard({ file }: { file: FixedFile }) {
         </div>
       )}
 
-      {/* Skipped/Failed explanation */}
-      {expanded && file.status !== 'fixed' && (
-        <div className="border-t border-white/5 px-4 py-3 text-sm text-zinc-400">
-          {file.status === 'skipped' && (
-            <p>
-              ⏭️ This file was skipped: <span className="text-amber-400">{file.skip_reason}</span>
-              <br />
-              <span className="text-xs text-zinc-500 mt-1 block">
-                Use the AI Fix Prompt to fix this file manually in your IDE.
+      {/* Skipped/Failed explanation with friendly messaging */}
+      {expanded && file.status !== 'fixed' && (() => {
+        const friendly = translateFixError(file.skip_reason)
+        const isSkipped = file.status === 'skipped'
+        const colorObj = COLOR_MAP[file.status as 'skipped' | 'failed']
+        const icon = isSkipped ? '⏭️' : '❌'
+
+        return (
+          <div className="border-t border-white/5 px-4 py-4 space-y-2.5">
+            {/* Title with icon */}
+            <div className="flex items-start gap-2">
+              <span className="text-base leading-none mt-0.5">{icon}</span>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-semibold ${colorObj.title}`}>
+                  {friendly.title}
+                </p>
+                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                  {friendly.message}
+                </p>
+              </div>
+            </div>
+
+            {/* Suggestion box */}
+            <div className="ml-6 flex items-start gap-2 rounded-md bg-indigo-500/10 border border-indigo-500/25 px-3 py-2">
+              <span className="text-xs text-indigo-300 leading-relaxed">
+                💡 <strong>Suggestion:</strong> {friendly.suggestion}
               </span>
-            </p>
-          )}
-          {file.status === 'failed' && (
-            <p>
-              ❌ This file could not be fixed: <span className="text-red-400">{file.skip_reason}</span>
-              <br />
-              <span className="text-xs text-zinc-500 mt-1 block">
-                Use the AI Fix Prompt to fix this file manually in your IDE.
-              </span>
-            </p>
-          )}
-        </div>
-      )}
+            </div>
+
+            {/* Raw reason — collapsible for debugging */}
+            {file.skip_reason && (
+              <details className="ml-6 group">
+                <summary className="text-[10px] text-zinc-600 cursor-pointer hover:text-zinc-400 select-none">
+                  Show technical details
+                </summary>
+                <p className="mt-1 text-[10px] text-zinc-500 font-mono bg-zinc-950/50 px-2 py-1.5 rounded border border-zinc-800/50">
+                  {file.skip_reason}
+                </p>
+              </details>
+            )}
+          </div>
+        )
+      })()}
     </div>
   )
 }
