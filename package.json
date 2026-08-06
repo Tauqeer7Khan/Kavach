@@ -14,6 +14,7 @@
     "@base-ui/react": "^1.6.0",
     "@hookform/resolvers": "^5.5.7",
     "@monaco-editor/react": "^4.7.0",
+    "@octokit/rest": "^22.0.1",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.111.0",
     "@upstash/redis": "^1.38.0",

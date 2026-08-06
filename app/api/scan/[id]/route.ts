@@ -37,7 +37,7 @@ export async function GET(
     // 3. Fetch scan from database
     const { data: scan, error: scanError } = await supabase
       .from('scans')
-      .select('*')
+      .select('*, projects(name, repo_url)')
       .eq('id', scanId)
       .single();
 

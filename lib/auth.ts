@@ -26,6 +26,7 @@ export async function signInWithGitHub() {
     provider: 'github',
     options: {
       redirectTo: `${window.location.origin}/api/auth/callback`,
+      scopes: 'repo read:user user:email',
     },
   })
   

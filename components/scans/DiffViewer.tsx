@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronRight,
   Loader2,
+  GitPullRequest,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import { translateFixError } from '@/lib/fix-error-messages'
+import { CreatePRModal } from './CreatePRModal'
 import type { FixJob, FixedFile } from './AutoFixButton'
 
 // ── Props ──────────────────────────────────────────────────
@@ -30,6 +32,8 @@ interface DiffViewerProps {
   onClose:  () => void
   fixJob:   FixJob
   scanId:   string
+  userPlan: 'free' | 'pro' | 'enterprise'
+  repoUrl?: string
 }
 
 // ── Inline diff computation ────────────────────────────────
@@ -224,9 +228,10 @@ function FileCard({ file }: { file: FixedFile }) {
 
 // ── Main DiffViewer ────────────────────────────────────────
 
-export function DiffViewer({ isOpen, onClose, fixJob, scanId }: DiffViewerProps) {
+export function DiffViewer({ isOpen, onClose, fixJob, scanId, userPlan, repoUrl }: DiffViewerProps) {
   const { toast }           = useToast()
   const [downloading, setDownloading] = React.useState(false)
+  const [showPRModal, setShowPRModal] = React.useState(false)
 
   const fixedFiles   = fixJob.fixed_files ?? []
   const successCount = fixedFiles.filter(f => f.status === 'fixed').length
@@ -272,8 +277,9 @@ export function DiffViewer({ isOpen, onClose, fixJob, scanId }: DiffViewerProps)
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
-      <DialogContent
+    <>
+      <Dialog open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
+        <DialogContent
         className="sm:max-w-4xl w-full bg-zinc-900 border border-zinc-700/60 text-zinc-100 shadow-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
       >
         {/* Header */}
@@ -336,6 +342,15 @@ export function DiffViewer({ isOpen, onClose, fixJob, scanId }: DiffViewerProps)
             >
               Close
             </Button>
+            {userPlan === 'enterprise' && successCount > 0 && (
+              <Button
+                onClick={() => setShowPRModal(true)}
+                className="bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-2"
+              >
+                <GitPullRequest className="h-4 w-4" />
+                Push to GitHub PR
+              </Button>
+            )}
             {successCount > 0 && (
               <Button
                 onClick={handleDownloadZip}
@@ -353,5 +368,17 @@ export function DiffViewer({ isOpen, onClose, fixJob, scanId }: DiffViewerProps)
         </div>
       </DialogContent>
     </Dialog>
+    {showPRModal && (
+      <CreatePRModal
+        isOpen={showPRModal}
+        onClose={() => setShowPRModal(false)}
+        scanId={scanId}
+        fixJobId={fixJob.id}
+        repoUrl={repoUrl}
+        filesCount={successCount}
+        vulnsCount={fixJob.total_vulns}
+      />
+    )}
+    </>
   )
 }

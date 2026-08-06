@@ -260,3 +260,37 @@ CREATE INDEX IF NOT EXISTS idx_auto_fix_jobs_scan_id
 
 CREATE INDEX IF NOT EXISTS idx_auto_fix_jobs_user_id 
   ON auto_fix_jobs(user_id);
+
+-- ─────────────────────────────────────────────────────────
+-- github_prs — Track PRs created by KAVACH (Phase 3)
+-- ─────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS github_prs (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  scan_id               UUID REFERENCES scans(id) ON DELETE CASCADE,
+  fix_job_id            UUID REFERENCES auto_fix_jobs(id) ON DELETE CASCADE,
+  user_id               UUID REFERENCES users(id) ON DELETE CASCADE,
+
+  repo_owner            VARCHAR(200) NOT NULL,
+  repo_name             VARCHAR(200) NOT NULL,
+  base_branch           VARCHAR(200) NOT NULL,
+  head_branch           VARCHAR(200) NOT NULL,
+
+  pr_number             INTEGER,
+  pr_url                TEXT,
+  pr_title              TEXT,
+
+  files_pushed          INTEGER DEFAULT 0,
+  vulnerabilities_fixed INTEGER DEFAULT 0,
+
+  status                VARCHAR(20) DEFAULT 'pending',
+  -- pending, creating, created, failed
+
+  error_message         TEXT,
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_github_prs_scan_id
+  ON github_prs(scan_id);
+
+CREATE INDEX IF NOT EXISTS idx_github_prs_user_id
+  ON github_prs(user_id);

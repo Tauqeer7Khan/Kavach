@@ -66,7 +66,10 @@ interface ScanReport {
   queue_position: number | null
   error_message: string | null
   created_at: string
-  projects?: { name: string } | null
+  projects?: {
+    name: string | null
+    repo_url: string | null
+  } | null
   vulnerabilities?: Vulnerability[]
 }
 
@@ -549,6 +552,8 @@ export default function ScanDetailPage() {
           onClose={() => setShowDiffViewer(false)}
           fixJob={fixJob}
           scanId={report.id}
+          userPlan={userPlan}
+          repoUrl={report.projects?.repo_url ?? undefined}
         />
       )}
     </div>

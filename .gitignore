@@ -86,3 +86,8 @@ tmp/
 # Backup files
 *.backup
 *.bak
+
+# Scratch/debug files
+scratch_*.ts
+fix_syntax.ts
+*.scratch.ts
