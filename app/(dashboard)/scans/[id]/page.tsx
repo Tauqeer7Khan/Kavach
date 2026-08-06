@@ -5,8 +5,10 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   Shield, RotateCcw, Share2, AlertOctagon,
-  AlertTriangle, Info, XCircle, Search
+  AlertTriangle, Info, XCircle, Search, Bot,
 } from 'lucide-react'
+import { AiFixPromptModal } from '@/components/scans/AiFixPromptModal'
+import { detectLanguage, type ScanReportForPrompt } from '@/lib/prompt-generator'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -101,6 +103,7 @@ export default function ScanDetailPage() {
   const [severityFilter, setSeverityFilter] = useState<string>('all')
   const [search, setSearch]           = useState<string>('')
   const [copied, setCopied]           = useState<boolean>(false)
+  const [showPromptModal, setShowPromptModal] = useState<boolean>(false)
 
   // ── Fetch report ─────────────────────────────────────────────────────────
 
@@ -312,6 +315,25 @@ export default function ScanDetailPage() {
 
   // ── Completed Report ──────────────────────────────────────────────────────
 
+  // Map Supabase Vulnerability → VulnerabilityForPrompt for the modal
+  const promptReport: ScanReportForPrompt = {
+    scanId:      report.id,
+    projectName: report.projects?.name ?? 'This Project',
+    vulnerabilities: (report.vulnerabilities ?? []).map((v) => ({
+      id:             v.id,
+      type:           v.name,
+      severity:       (v.severity ?? 'MEDIUM').toLowerCase(),
+      filePath:       v.file_path        ?? '',
+      lineNumber:     v.line_number      ?? 0,
+      vulnerableCode: v.vulnerable_code  ?? '',
+      fixedCode:      v.fixed_code       ?? '',
+      explanation:    v.ai_explanation   ?? v.description ?? '',
+      fixReasoning:   v.ai_fix_explanation ?? '',
+      owaspId:        v.owasp_id         ?? undefined,
+      language:       detectLanguage(v.file_path ?? ''),
+    })),
+  }
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
 
@@ -337,6 +359,15 @@ export default function ScanDetailPage() {
           >
             <Share2 className="h-4 w-4 mr-2" />
             {copied ? 'Copied!' : 'Share'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPromptModal(true)}
+            className="border-indigo-500/40 text-indigo-400 hover:bg-indigo-600/10 hover:text-indigo-300 bg-transparent gap-1.5"
+          >
+            <Bot className="h-4 w-4" />
+            Get AI Fix Prompt
           </Button>
           <Button
             size="sm"
@@ -463,6 +494,13 @@ export default function ScanDetailPage() {
           ← Back to all scans
         </Link>
       </div>
+
+      {/* AI Fix Prompt Modal */}
+      <AiFixPromptModal
+        isOpen={showPromptModal}
+        onClose={() => setShowPromptModal(false)}
+        scanReport={promptReport}
+      />
     </div>
   )
 }
