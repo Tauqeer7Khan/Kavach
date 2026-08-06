@@ -76,7 +76,7 @@ export function AutoFixButton({
   }, [])
 
   // ── Poll fix job status ────────────────────────────────
-  const startPolling = React.useCallback((jobId: string) => {
+  const startPolling = React.useCallback(() => {
     if (pollRef.current) clearInterval(pollRef.current)
 
     pollRef.current = setInterval(async () => {
@@ -153,14 +153,15 @@ export function AutoFixButton({
         description: 'KAVACH AI is fixing your vulnerabilities...',
       })
 
-      startPolling(data.fixJobId)
+      startPolling()
 
-    } catch (err: any) {
+    } catch (err) {
       setPhase('error')
-      setErrorMsg(err.message ?? 'Failed to start auto-fix')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start auto-fix'
+      setErrorMsg(errorMessage)
       toast({
         title:       'Error',
-        description: err.message,
+        description: errorMessage,
         variant:     'destructive',
       })
     }

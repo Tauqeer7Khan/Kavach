@@ -85,7 +85,7 @@ export async function GET(
     const dateStr = new Date().toISOString().split('T')[0]
     const filename = `kavach-fixes-${scanId.slice(0, 8)}-${dateStr}.zip`
 
-    return new NextResponse(zipBuffer as any, {
+    return new NextResponse(new Uint8Array(zipBuffer), {
       status:  200,
       headers: {
         'Content-Type':        'application/zip',
@@ -94,18 +94,32 @@ export async function GET(
       },
     })
 
-  } catch (err: any) {
+  } catch (err) {
     console.error('Download ZIP error:', err)
+    const errorMessage = err instanceof Error ? err.message : 'Failed to generate ZIP'
     return NextResponse.json(
-      { error: err.message || 'Failed to generate ZIP' },
+      { error: errorMessage },
       { status: 500 }
     )
   }
 }
 
+interface FixJobForSummary {
+  scan_id: string
+  total_vulns: number
+}
+
+interface FixedFileForSummary {
+  file_path: string
+  status: string
+  vulnerabilities_fixed: string[]
+  lines_changed: number
+  skip_reason?: string
+}
+
 function buildSummaryMarkdown(
-  fixJob: any,
-  fixedFiles: any[]
+  fixJob: FixJobForSummary,
+  fixedFiles: FixedFileForSummary[]
 ): string {
   const date    = new Date().toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric'

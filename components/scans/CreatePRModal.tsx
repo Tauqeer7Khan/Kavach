@@ -26,7 +26,6 @@ interface CreatePRModalProps {
   fixJobId:    string
   repoUrl?:    string
   filesCount:  number
-  vulnsCount:  number
 }
 
 type Phase = 'config' | 'creating' | 'success' | 'error'
@@ -38,7 +37,6 @@ export function CreatePRModal({
   fixJobId,
   repoUrl: initialRepoUrl,
   filesCount,
-  vulnsCount,
 }: CreatePRModalProps) {
   const { toast } = useToast()
 
@@ -93,9 +91,10 @@ export function CreatePRModal({
         title:       '✅ PR Created!',
         description: `Pull request #${data.prNumber} opened.`,
       })
-    } catch (err: any) {
+    } catch (err) {
       setPhase('error')
-      setError(err.message ?? 'Network error')
+      const errorMessage = err instanceof Error ? err.message : 'Network error'
+      setError(errorMessage)
     }
   }
 

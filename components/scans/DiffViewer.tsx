@@ -265,10 +265,11 @@ export function DiffViewer({ isOpen, onClose, fixJob, scanId, userPlan, repoUrl 
         title:       '📦 Download Started',
         description: 'Your fixed files are downloading.',
       })
-    } catch (err: any) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Download failed'
       toast({
         title:       'Download Failed',
-        description: err.message,
+        description: errorMessage,
         variant:     'destructive',
       })
     } finally {
@@ -376,7 +377,6 @@ export function DiffViewer({ isOpen, onClose, fixJob, scanId, userPlan, repoUrl 
         fixJobId={fixJob.id}
         repoUrl={repoUrl}
         filesCount={successCount}
-        vulnsCount={fixJob.total_vulns}
       />
     )}
     </>

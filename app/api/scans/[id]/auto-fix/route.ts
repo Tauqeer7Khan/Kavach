@@ -54,10 +54,11 @@ export async function GET(
 
     return NextResponse.json({ fixJob })
 
-  } catch (err: any) {
+  } catch (err) {
     console.error('Auto-fix GET error:', err)
+    const errorMessage = err instanceof Error ? err.message : 'Failed to fetch fix job'
     return NextResponse.json(
-      { error: err.message || 'Failed to fetch fix job' },
+      { error: errorMessage },
       { status: 500 }
     )
   }
@@ -229,10 +230,11 @@ export async function POST(
       message:  'Fix job queued successfully',
     })
 
-  } catch (err: any) {
+  } catch (err) {
     console.error('Auto-fix POST error:', err)
+    const errorMessage = err instanceof Error ? err.message : 'Failed to start fix job'
     return NextResponse.json(
-      { error: err.message || 'Failed to start fix job' },
+      { error: errorMessage },
       { status: 500 }
     )
   } finally {

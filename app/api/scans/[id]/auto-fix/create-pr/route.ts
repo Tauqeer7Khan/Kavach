@@ -69,9 +69,13 @@ export async function POST(
 
     // ── Get GitHub access token from session ──────────────
     const { data: { session } } = await supabase.auth.getSession()
+    const sessionData = session as {
+      provider_token?: string
+      provider_refresh_token?: string
+    } | null
     const githubToken =
-      (session as any)?.provider_token ??
-      (session as any)?.provider_refresh_token
+      sessionData?.provider_token ??
+      sessionData?.provider_refresh_token
 
     if (!githubToken) {
       return NextResponse.json(
@@ -250,10 +254,11 @@ export async function POST(
       )
     }
 
-  } catch (err: any) {
+  } catch (err) {
     console.error('Create PR error:', err)
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json(
-      { error: err.message ?? 'Failed to create PR' },
+      { error: errorMessage ?? 'Failed to create PR' },
       { status: 500 }
     )
   }

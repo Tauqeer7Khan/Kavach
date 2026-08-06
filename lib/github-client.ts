@@ -68,17 +68,18 @@ export async function verifyRepoAccess(
       canPush:       data.permissions?.push ?? false,
       defaultBranch: data.default_branch,
     }
-  } catch (err: any) {
-    if (err.status === 401) {
+  } catch (err) {
+    const error = err as { status?: number; message?: string }
+    if (error.status === 401) {
       return { hasAccess: false, canPush: false, error: 'GitHub token invalid or expired' }
     }
-    if (err.status === 404) {
+    if (error.status === 404) {
       return { hasAccess: false, canPush: false, error: 'Repository not found' }
     }
-    if (err.status === 403) {
+    if (error.status === 403) {
       return { hasAccess: false, canPush: false, error: 'Access denied to repository' }
     }
-    return { hasAccess: false, canPush: false, error: err.message ?? 'Failed to access repository' }
+    return { hasAccess: false, canPush: false, error: error.message ?? 'Failed to access repository' }
   }
 }
 
@@ -229,21 +230,22 @@ export async function createSecurityFixPR(opts: CreatePROptions): Promise<Create
       branchName: finalBranch,
     }
 
-  } catch (err: any) {
+  } catch (err) {
     // Map common GitHub errors
-    if (err.status === 401) {
+    const error = err as { status?: number; message?: string }
+    if (error.status === 401) {
       return { success: false, error: 'GitHub authentication expired — please sign in again', errorCode: 'auth_expired' }
     }
-    if (err.status === 403) {
-      if (err.message?.toLowerCase().includes('rate limit')) {
+    if (error.status === 403) {
+      if (error.message?.toLowerCase().includes('rate limit')) {
         return { success: false, error: 'GitHub rate limit exceeded — try again in a few minutes', errorCode: 'rate_limit' }
       }
       return { success: false, error: 'No push access to this repository', errorCode: 'no_access' }
     }
-    if (err.status === 422) {
-      return { success: false, error: err.message ?? 'Branch already exists', errorCode: 'branch_exists' }
+    if (error.status === 422) {
+      return { success: false, error: error.message ?? 'Branch already exists', errorCode: 'branch_exists' }
     }
-    return { success: false, error: err.message ?? 'Unknown error', errorCode: 'unknown' }
+    return { success: false, error: error.message ?? 'Unknown error', errorCode: 'unknown' }
   }
 }
 
