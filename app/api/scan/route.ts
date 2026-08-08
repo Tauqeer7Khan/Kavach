@@ -13,7 +13,11 @@ const scanRequestSchema = z.object({
   repoUrl: z.string().optional(),
   r2Keys: z.array(z.string()).optional(),
   pastedCode: z.string().max(100000, "Pasted code too long").optional(),
-  language: z.string().optional()
+  language: z.string().optional(),
+  autoPushEnabled: z.boolean().optional(),
+  pushRepoUrl: z.string().optional(),
+  pushRepoOwner: z.string().optional(),
+  pushRepoName: z.string().optional()
 }).refine(data => {
   if (data.sourceType === 'github' && !data.repoUrl) return false;
   if (data.sourceType === 'upload' && (!data.r2Keys || data.r2Keys.length === 0)) return false;
@@ -38,7 +42,10 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    const { projectName, sourceType, repoUrl, r2Keys, pastedCode, language } = parseResult.data;
+    const { 
+      projectName, sourceType, repoUrl, r2Keys, pastedCode, language, 
+      autoPushEnabled, pushRepoUrl, pushRepoOwner, pushRepoName 
+    } = parseResult.data;
 
     // ==========================================
     // 3. Authenticate User Session
@@ -118,6 +125,10 @@ export async function POST(req: NextRequest) {
         user_id: user.id,
         status: 'queued',
         progress_percentage: 0,
+        auto_push_enabled: autoPushEnabled ?? false,
+        push_repo_url: pushRepoUrl ?? null,
+        push_repo_owner: pushRepoOwner ?? null,
+        push_repo_name: pushRepoName ?? null,
       })
       .select('id')
       .single();
@@ -136,7 +147,7 @@ export async function POST(req: NextRequest) {
       .eq('id', user.id);
 
     // ==========================================
-    // 8. Add Job to BullMQ Queue
+    // 8. Add Job to pg-boss Queue (Postgres-backed)
     // ==========================================
     const { jobId, position } = await addScanJob({
       scanId: newScan.id,

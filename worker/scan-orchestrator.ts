@@ -219,6 +219,17 @@ export async function orchestrateScan(job: Job<ScanJob>) {
     const aiResults: ParsedVulnerability[] = [];
 
     for (let i = 0; i < filesForScan.length; i++) {
+      // ── CHECK FOR CANCELLATION ──────────────────────────────
+      const { data: currentScan } = await supabaseAdmin
+        .from('scans')
+        .select('status')
+        .eq('id', scanId)
+        .single();
+        
+      if (currentScan?.status === 'cancelled') {
+        throw new Error('SCAN_CANCELLED');
+      }
+
       const file = filesForScan[i];
       
       try {
@@ -558,6 +569,16 @@ export async function orchestrateScan(job: Job<ScanJob>) {
     console.log('');
 
   } catch (error: any) {
+    if (error.message === 'SCAN_CANCELLED') {
+      console.warn(`⚠️ Scan ${scanId} was cancelled by the user.`);
+      try {
+        await fs.rm(tempDir, { recursive: true, force: true });
+      } catch (cleanupError) {
+        console.warn(`⚠️ Failed to clean up temp directory ${tempDir} after cancellation:`, cleanupError);
+      }
+      return;
+    }
+
     console.error(`\n❌ Scan ${scanId} failed!`);
     console.error(error.stack || error);
 

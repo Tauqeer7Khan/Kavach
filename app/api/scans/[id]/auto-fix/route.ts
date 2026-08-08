@@ -2,26 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { Queue } from 'bullmq'
-import IORedis from 'ioredis'
+import { addAutoFixJob } from '@/lib/queue'
 
-// ── Redis connection (same as worker) ──────────────────────
-function getRedisConnection() {
-  const redisUrl   = process.env.UPSTASH_REDIS_REST_URL  || ''
-  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || ''
-
-  if (!redisUrl || !redisToken) {
-    throw new Error('Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN')
-  }
-
-  let finalUrl = redisUrl
-  if (redisUrl.startsWith('https://')) {
-    const host = redisUrl.replace('https://', '')
-    finalUrl = `rediss://default:${redisToken}@${host}:6379`
-  }
-
-  return new IORedis(finalUrl, { maxRetriesPerRequest: null })
-}
 
 // ── GET — poll status of existing fix job ──────────────────
 export async function GET(
@@ -69,7 +51,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  let connection: IORedis | null = null
+
 
   try {
     const supabase = await createClient()
@@ -205,24 +187,7 @@ export async function POST(
     }
 
     // ── Queue the job ──────────────────────────────────────
-    connection = getRedisConnection()
-
-    const autoFixQueue = new Queue('kavach-auto-fixes', {
-      connection,
-    })
-
-    await autoFixQueue.add(
-      'fix-vulnerabilities',
-      { fixJobId: fixJob.id },
-      {
-        attempts:  2,
-        backoff:   { type: 'fixed', delay: 5000 },
-        removeOnComplete: 50,
-        removeOnFail:     20,
-      }
-    )
-
-    await autoFixQueue.close()
+    await addAutoFixJob(fixJob.id)
 
     return NextResponse.json({
       success:  true,
@@ -237,9 +202,5 @@ export async function POST(
       { error: errorMessage },
       { status: 500 }
     )
-  } finally {
-    if (connection) {
-      try { connection.disconnect() } catch {}
-    }
   }
 }
