@@ -18,7 +18,7 @@ import { Eye, RotateCcw } from 'lucide-react'
 
 type ScanStatus =
   | 'queued' | 'downloading' | 'scanning'
-  | 'analyzing' | 'scoring' | 'completed' | 'failed'
+  | 'analyzing' | 'scoring' | 'completed' | 'failed' | 'cancelled'
 
 interface Scan {
   id: string
@@ -57,8 +57,9 @@ function statusBadge(status: ScanStatus): JSX.Element {
     scoring:     { label: 'Scoring',    class: 'bg-violet-500/20 text-violet-400 animate-pulse' },
     completed:   { label: 'Complete',   class: 'bg-green-500/20 text-green-400' },
     failed:      { label: 'Failed',     class: 'bg-red-500/20 text-red-400' },
+    cancelled:   { label: 'Cancelled',  class: 'bg-zinc-500/20 text-zinc-400' },
   }
-  const cfg = map[status]
+  const cfg = map[status] || map.failed
   return <Badge className={`text-xs font-medium border-0 ${cfg.class}`}>{cfg.label}</Badge>
 }
 

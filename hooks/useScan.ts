@@ -37,6 +37,10 @@ export interface CreateScanPayload {
   repoUrl?: string      // for github
   pastedCode?: string   // for paste
   language?: string     // for paste
+  autoPushEnabled?: boolean
+  pushRepoUrl?: string
+  pushRepoOwner?: string
+  pushRepoName?: string
 }
 
 interface UseScanReturn {
@@ -201,6 +205,10 @@ export function useScan(): UseScanReturn {
       if (payload.repoUrl) body.repoUrl = payload.repoUrl
       if (payload.pastedCode) body.pastedCode = payload.pastedCode
       if (payload.language) body.language = payload.language
+      if (payload.autoPushEnabled !== undefined) body.autoPushEnabled = payload.autoPushEnabled
+      if (payload.pushRepoUrl) body.pushRepoUrl = payload.pushRepoUrl
+      if (payload.pushRepoOwner) body.pushRepoOwner = payload.pushRepoOwner
+      if (payload.pushRepoName) body.pushRepoName = payload.pushRepoName
 
       const res = await fetch('/api/scan', {
         method: 'POST',

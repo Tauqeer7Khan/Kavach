@@ -83,6 +83,10 @@ export interface Scan {
   started_at: string | null
   completed_at: string | null
   created_at: string
+  auto_push_enabled?: boolean
+  push_repo_url?: string | null
+  push_repo_owner?: string | null
+  push_repo_name?: string | null
 }
 
 export interface Vulnerability {
@@ -145,6 +149,10 @@ export interface CreateScanRequest {
   repoUrl?: string
   pastedCode?: string
   language?: string
+  autoPushEnabled?: boolean
+  pushRepoUrl?: string
+  pushRepoOwner?: string
+  pushRepoName?: string
 }
 
 export interface CreateScanResponse {

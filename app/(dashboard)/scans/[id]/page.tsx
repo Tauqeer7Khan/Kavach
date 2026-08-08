@@ -3,12 +3,15 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useToast } from '@/hooks/use-toast'
 import {
   Shield, RotateCcw, Share2, AlertOctagon,
-  AlertTriangle, Info, XCircle, Search, Bot,
+  AlertTriangle, Info, XCircle, Search,
 } from 'lucide-react'
 import { AiFixPromptModal } from '@/components/scans/AiFixPromptModal'
 import { AutoFixButton, type FixJob } from '@/components/scans/AutoFixButton'
+import { AutoPushFlow }               from '@/components/scans/AutoPushFlow'
+import { FixActionsCard }             from '@/components/scans/FixActionsCard'
 import { DiffViewer }                 from '@/components/scans/DiffViewer'
 import { detectLanguage, type ScanReportForPrompt } from '@/lib/prompt-generator'
 import { Button } from '@/components/ui/button'
@@ -24,7 +27,7 @@ import { createClient } from '@/lib/supabase-client'
 
 type ScanStatus =
   | 'queued' | 'downloading' | 'scanning'
-  | 'analyzing' | 'scoring' | 'completed' | 'failed'
+  | 'analyzing' | 'scoring' | 'completed' | 'failed' | 'cancelled'
 
 type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO'
 
@@ -71,6 +74,10 @@ interface ScanReport {
     repo_url: string | null
   } | null
   vulnerabilities?: Vulnerability[]
+  auto_push_enabled?: boolean
+  push_repo_url?: string | null
+  push_repo_owner?: string | null
+  push_repo_name?: string | null
 }
 
 // ─── Status title helper ──────────────────────────────────────────────────────
@@ -84,6 +91,7 @@ function getStatusTitle(status: ScanStatus): string {
     scoring:     'Generating your report...',
     completed:   'Scan Complete',
     failed:      'Scan Failed',
+    cancelled:   'Scan Cancelled',
   }
   return titles[status]
 }
@@ -114,6 +122,8 @@ export default function ScanDetailPage() {
   const [fixJob,          setFixJob]          = useState<FixJob | null>(null)
   const [showDiffViewer,  setShowDiffViewer]  = useState(false)
   const [userPlan,        setUserPlan]        = useState<'free'|'pro'|'enterprise'>('free')
+  const [isCancelling,    setIsCancelling]    = useState(false)
+  const { toast } = useToast()
 
   // ── Fetch report ─────────────────────────────────────────────────────────
 
@@ -163,7 +173,7 @@ export default function ScanDetailPage() {
       const data = json.scan
       setReport(prev => prev ? { ...prev, ...data } : data)
 
-      if (data.status === 'completed' || data.status === 'failed') {
+      if (data.status === 'completed' || data.status === 'failed' || data.status === 'cancelled') {
         if (data.status === 'completed') {
           await fetchReport()
         }
@@ -217,7 +227,7 @@ export default function ScanDetailPage() {
       }, (payload: { new: Record<string, unknown> }) => {
         const row = payload.new
         setReport(prev => prev ? { ...prev, ...row } as ScanReport : null)
-        if (row.status === 'completed' || row.status === 'failed') {
+        if (row.status === 'completed' || row.status === 'failed' || row.status === 'cancelled') {
           stopped = true
           clearInterval(interval)
           if (row.status === 'completed') {
@@ -241,6 +251,26 @@ export default function ScanDetailPage() {
     await navigator.clipboard.writeText(window.location.href)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  // ── Cancel handler ────────────────────────────────────────────────────────
+
+  const handleCancel = async () => {
+    setIsCancelling(true)
+    try {
+      const res = await fetch(`/api/scans/${scanId}/cancel`, { method: 'POST' })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Failed to cancel scan')
+      }
+      toast({ title: 'Scan Cancelled', description: 'The scan has been stopped.' })
+      await fetchStatus()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      toast({ title: 'Error', description: message, variant: 'destructive' })
+    } finally {
+      setIsCancelling(false)
+    }
   }
 
   // ── Filter vulnerabilities ────────────────────────────────────────────────
@@ -280,7 +310,7 @@ export default function ScanDetailPage() {
 
   // ── In Progress ───────────────────────────────────────────────────────────
 
-  if (report.status !== 'completed' && report.status !== 'failed') {
+  if (report.status !== 'completed' && report.status !== 'failed' && report.status !== 'cancelled') {
     return (
       <div className="max-w-2xl mx-auto py-12">
         <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-2xl p-8 space-y-8">
@@ -303,7 +333,7 @@ export default function ScanDetailPage() {
           />
 
           {/* Cancel */}
-          <div className="text-center">
+          <div className="flex items-center justify-center gap-4">
             <Button
               variant="ghost"
               size="sm"
@@ -311,6 +341,15 @@ export default function ScanDetailPage() {
               onClick={() => router.push('/scans')}
             >
               ← Back to scans
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={isCancelling}
+              onClick={handleCancel}
+              className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
+            >
+              {isCancelling ? 'Cancelling...' : 'Cancel Scan'}
             </Button>
           </div>
         </div>
@@ -340,6 +379,37 @@ export default function ScanDetailPage() {
     )
   }
 
+  // ── Cancelled ─────────────────────────────────────────────────────────────
+
+  if (report.status === 'cancelled') {
+    return (
+      <div className="max-w-2xl mx-auto py-12">
+        <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-2xl p-8 text-center space-y-4">
+          <XCircle className="h-12 w-12 text-zinc-500 mx-auto" />
+          <h1 className="text-xl font-bold text-zinc-900 dark:text-white">Scan Cancelled</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 text-sm">
+            {report.progress_message ?? 'This scan was cancelled by the user.'}
+          </p>
+          <div className="flex items-center justify-center gap-4 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/scans')}
+              className="border-zinc-200 dark:border-[#1f1f1f]"
+            >
+              Back to Scans
+            </Button>
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700 text-zinc-900 dark:text-white"
+              onClick={() => router.push('/scans/new')}
+            >
+              Start New Scan
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // ── Completed Report ──────────────────────────────────────────────────────
 
   // Map Supabase Vulnerability → VulnerabilityForPrompt for the modal
@@ -360,6 +430,9 @@ export default function ScanDetailPage() {
       language:       detectLanguage(v.file_path ?? ''),
     })),
   }
+
+  const autoPushEnabled = report.auto_push_enabled ?? false
+  const pushRepoUrl = report.push_repo_url ?? null
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -387,33 +460,6 @@ export default function ScanDetailPage() {
             <Share2 className="h-4 w-4 mr-2" />
             {copied ? 'Copied!' : 'Share'}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowPromptModal(true)}
-            className="border-indigo-500/40 text-indigo-400 hover:bg-indigo-600/10 hover:text-indigo-300 bg-transparent gap-1.5"
-          >
-            <Bot className="h-4 w-4" />
-            Get AI Fix Prompt
-          </Button>
-          <AutoFixButton
-            scanId={report.id}
-            userPlan={userPlan}
-            vulnerabilityIds={
-              (report.vulnerabilities ?? [])
-                .filter(v => !v.is_fixed && !v.is_false_positive)
-                .map(v => v.id)
-            }
-            vulnerabilityCount={
-              (report.vulnerabilities ?? [])
-                .filter(v => !v.is_fixed && !v.is_false_positive)
-                .length
-            }
-            onFixComplete={(job) => {
-              setFixJob(job)
-              setShowDiffViewer(true)
-            }}
-          />
           <Button
             size="sm"
             className="bg-indigo-600 hover:bg-indigo-700 text-zinc-900 dark:text-white"
@@ -477,6 +523,56 @@ export default function ScanDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Enterprise auto-push flow — shows above FixActionsCard */}
+      <AutoPushFlow
+        scanId={report.id}
+        scanStatus={report.status}
+        autoPushEnabled={autoPushEnabled}
+        pushRepoUrl={pushRepoUrl}
+        vulnerabilityIds={
+          (report.vulnerabilities ?? [])
+            .filter(v => !v.is_fixed && !v.is_false_positive)
+            .map(v => v.id)
+        }
+        vulnerabilityCount={
+          (report.vulnerabilities ?? [])
+            .filter(v => !v.is_fixed && !v.is_false_positive)
+            .length
+        }
+        userPlan={userPlan}
+      />
+
+      {/* NEW: Fix Actions Card */}
+      <FixActionsCard
+        vulnerabilityCount={
+          (report.vulnerabilities ?? [])
+            .filter(v => !v.is_fixed && !v.is_false_positive)
+            .length
+        }
+        userPlan={userPlan}
+        onOpenPromptModal={() => setShowPromptModal(true)}
+        autoFixButtonSlot={
+          <AutoFixButton
+            scanId={report.id}
+            userPlan={userPlan}
+            vulnerabilityIds={
+              (report.vulnerabilities ?? [])
+                .filter(v => !v.is_fixed && !v.is_false_positive)
+                .map(v => v.id)
+            }
+            vulnerabilityCount={
+              (report.vulnerabilities ?? [])
+                .filter(v => !v.is_fixed && !v.is_false_positive)
+                .length
+            }
+            onFixComplete={(job) => {
+              setFixJob(job)
+              setShowDiffViewer(true)
+            }}
+          />
+        }
+      />
 
       {/* Vulnerability List */}
       <div className="space-y-4">

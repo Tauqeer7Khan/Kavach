@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useScan } from '@/hooks/useScan'
 import { useToast } from '@/hooks/use-toast'
@@ -11,6 +11,8 @@ import { GithubIcon } from '@/components/shared/GithubIcon'
 import { FileUploader } from '@/components/upload/FileUploader'
 import { GitHubConnect } from '@/components/upload/GitHubConnect'
 import { CodePasteEditor } from '@/components/upload/CodePasteEditor'
+import { AutoPushSection } from '@/components/scans/AutoPushSection'
+import { createClient } from '@/lib/supabase-client'
 
 export default function NewScanPage() {
   const router = useRouter()
@@ -32,6 +34,21 @@ export default function NewScanPage() {
 
   // Project name
   const [projectName, setProjectName] = useState<string>('My Project')
+
+  const [userPlan, setUserPlan] = useState<'free' | 'pro' | 'enterprise'>('free')
+  const [autoPushData, setAutoPushData] = useState<{ enabled: boolean; repoUrl?: string; owner?: string; repo?: string }>({ enabled: false })
+
+  useEffect(() => {
+    const fetchPlan = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase.from('users').select('plan').eq('id', user.id).single()
+        if (data) setUserPlan(data.plan)
+      }
+    }
+    fetchPlan()
+  }, [])
 
   // Active tab
   const [activeTab, setActiveTab] = useState<'upload' | 'github' | 'paste'>('paste')
@@ -84,12 +101,20 @@ export default function NewScanPage() {
         sourceType: 'upload',
         projectName: projectName.trim(),
         r2Key,
+        autoPushEnabled: autoPushData.enabled && !!autoPushData.repoUrl,
+        pushRepoUrl: autoPushData.repoUrl,
+        pushRepoOwner: autoPushData.owner,
+        pushRepoName: autoPushData.repo,
       })
     } else if (activeTab === 'github' && repoValidated && repoUrl) {
       scanId = await createScan({
         sourceType: 'github',
         projectName: projectName.trim(),
         repoUrl,
+        autoPushEnabled: autoPushData.enabled && !!autoPushData.repoUrl,
+        pushRepoUrl: autoPushData.repoUrl,
+        pushRepoOwner: autoPushData.owner,
+        pushRepoName: autoPushData.repo,
       })
     } else if (activeTab === 'paste' && pastedCode.length >= 10) {
       scanId = await createScan({
@@ -97,6 +122,10 @@ export default function NewScanPage() {
         projectName: projectName.trim(),
         pastedCode,
         language: pasteLanguage,
+        autoPushEnabled: autoPushData.enabled && !!autoPushData.repoUrl,
+        pushRepoUrl: autoPushData.repoUrl,
+        pushRepoOwner: autoPushData.owner,
+        pushRepoName: autoPushData.repo,
       })
     } else {
       toast({
@@ -111,7 +140,7 @@ export default function NewScanPage() {
       toast({ title: '🛡️ Scan started!', description: 'Redirecting to your report...' })
       router.push(`/scans/${scanId}`)
     }
-  }, [activeTab, r2Key, repoUrl, repoValidated, pastedCode, pasteLanguage, projectName, createScan, router, toast])
+  }, [activeTab, r2Key, repoUrl, repoValidated, pastedCode, pasteLanguage, projectName, autoPushData, createScan, router, toast])
 
   const isStartEnabled: boolean = 
     (activeTab === 'upload' && r2Key !== null && !isUploading) ||
@@ -214,6 +243,11 @@ export default function NewScanPage() {
             Give your scan a memorable name to find it later
           </p>
         </div>
+
+        <AutoPushSection
+          userPlan={userPlan}
+          onChange={setAutoPushData}
+        />
 
         <button
           disabled={!isStartEnabled || isCreating}
