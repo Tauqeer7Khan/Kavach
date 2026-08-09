@@ -12,6 +12,7 @@ import { deduplicateVulnerabilities, assignVulnCodes } from './reporters/vulnera
 import { getFilesToScan, detectLanguagesInDirectory } from './parsers/language-detector';
 import { cloneRepository } from './lib/git';
 import { downloadR2Files } from './lib/r2-utils';
+import { deleteFolder } from './r2-client';
 
 // Recursive file finder — locates a file by name anywhere in a directory
 async function findFileByName(
@@ -105,13 +106,26 @@ export async function orchestrateScan(job: Job<ScanJob>) {
         let ext = 'js';
         if (job.data.language) {
           const lang = job.data.language.toLowerCase();
-          if (lang === 'python') ext = 'py';
-          else if (lang === 'go') ext = 'go';
-          else if (lang === 'java') ext = 'java';
-          else if (lang === 'php') ext = 'php';
-          else if (lang === 'typescript' || lang === 'ts') ext = 'ts';
-          else if (lang === 'csharp' || lang === 'c#') ext = 'cs';
-          else ext = lang;
+          const extMap: Record<string, string> = {
+            javascript: 'js',
+            js: 'js',
+            typescript: 'ts',
+            ts: 'ts',
+            python: 'py',
+            py: 'py',
+            go: 'go',
+            golang: 'go',
+            java: 'java',
+            php: 'php',
+            csharp: 'cs',
+            'c#': 'cs',
+            ruby: 'rb',
+            rust: 'rs',
+            cpp: 'cpp',
+            'c++': 'cpp',
+            c: 'c',
+          };
+          ext = extMap[lang] ?? 'txt';  // Safe fallback: unknown → .txt
         }
         const filePath = path.join(tempDir, `code.${ext}`);
         await fs.writeFile(filePath, job.data.pastedCode);
@@ -554,6 +568,23 @@ export async function orchestrateScan(job: Job<ScanJob>) {
     } catch (cleanupError) {
       console.warn(`⚠️ Failed to clean up temp directory:`, cleanupError);
       // Non-critical - just leaves files in /tmp
+    }
+
+    // ═══════════════════════════════════════════
+    // STEP P2: Clean up R2 uploaded files
+    // ═══════════════════════════════════════════
+    if (job.data.r2Keys && job.data.r2Keys.length > 0) {
+      try {
+        const firstKey = job.data.r2Keys[0];
+        const parts = firstKey.split('/');
+        if (parts.length >= 3) {
+          const folderPrefix = parts.slice(0, 3).join('/') + '/';
+          await deleteFolder(folderPrefix);
+          console.log(`🧹 Deleted R2 folder: ${folderPrefix}`);
+        }
+      } catch (r2CleanupError) {
+        console.warn(`⚠️ R2 cleanup failed (non-critical):`, r2CleanupError);
+      }
     }
 
     // ═══════════════════════════════════════════

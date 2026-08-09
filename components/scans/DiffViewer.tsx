@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Loader2,
   GitPullRequest,
+  Shield,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -321,8 +322,21 @@ export function DiffViewer({ isOpen, onClose, fixJob, scanId, userPlan, repoUrl 
         {/* File list */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 min-h-0">
           {fixedFiles.length === 0 && (
-            <div className="text-center py-12 text-zinc-500">
-              No files were processed.
+            <div className="flex items-start gap-3 rounded-lg border border-zinc-700/50 bg-zinc-800/50 p-4 mx-2">
+              <Shield className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-zinc-200">
+                  Fixed files removed for your privacy
+                </p>
+                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                  KAVACH automatically removes code diffs after 7 days. 
+                  Your fix summary is still available above.
+                </p>
+                <p className="text-xs text-zinc-400 mt-1">
+                  To generate new fixes, rescan your code and run 
+                  Auto-Fix again.
+                </p>
+              </div>
             </div>
           )}
           {fixedFiles.map((file, idx) => (

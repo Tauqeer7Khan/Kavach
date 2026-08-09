@@ -91,3 +91,7 @@ tmp/
 scratch_*.ts
 fix_syntax.ts
 *.scratch.ts
+
+# Debug/test scripts (local only)
+query_*.js
+task*.js

@@ -543,6 +543,17 @@ export default function ScanDetailPage() {
         userPlan={userPlan}
       />
 
+      {/* Privacy: show expiry notice for scans older than 48h */}
+      {report.status === 'completed' &&
+        new Date(report.created_at).getTime() < Date.now() - 48 * 60 * 60 * 1000 && (
+        <div className="flex items-center gap-2 text-xs text-zinc-500 mb-2">
+          <Shield className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+          <span>
+            Source files auto-removed after 48h for your privacy. 
+            Rescan to use Auto-Fix.
+          </span>
+        </div>
+      )}
       {/* NEW: Fix Actions Card */}
       <FixActionsCard
         vulnerabilityCount={

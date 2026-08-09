@@ -10,6 +10,8 @@ import {
   XCircle,
   AlertTriangle,
   ChevronRight,
+  Shield,
+  RotateCcw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
@@ -301,6 +303,37 @@ export function AutoFixButton({
 
   // ── ERROR ──────────────────────────────────────────────
   if (phase === 'error') {
+    // Special privacy message for expired file contents
+    if (errorMsg === 'File contents have expired. Please rescan to use Auto-Fix.') {
+      return (
+        <div className="w-full rounded-lg border border-zinc-700/50 bg-zinc-800/50 px-4 py-3">
+          <div className="flex items-start gap-3">
+            <Shield className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-zinc-200">
+                Source files removed for your privacy
+              </p>
+              <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                KAVACH automatically removes source code from our servers 
+                after 48 hours. Your scan report and vulnerability details 
+                are still available.
+              </p>
+              <a
+                href="/scans/new"
+                className="inline-flex items-center gap-1.5 mt-2 text-xs 
+                           font-medium text-blue-400 hover:text-blue-300 
+                           transition-colors"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Rescan to use Auto-Fix
+              </a>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    // Default error UI for all other errors
     return (
       <div className="flex w-full items-center justify-between gap-2 rounded-lg border border-red-500/30 bg-red-600/10 px-4 py-2">
         <div className="flex items-center gap-2 min-w-0">
