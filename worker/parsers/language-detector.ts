@@ -2,6 +2,33 @@ import { SupportedLanguage, FileToScan } from '../../types';
 import fs from 'fs/promises';
 import path from 'path';
 
+// Explicit whitelist of code/config file extensions that KAVACH 
+// can meaningfully scan and auto-fix. Extensions NOT in this list 
+// (like .md, .txt, .csv, .log) will be skipped entirely.
+const SUPPORTED_CODE_EXTENSIONS = new Set([
+  // JavaScript / TypeScript
+  '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs',
+  // Python
+  '.py', '.pyw',
+  // Java / Kotlin / Scala
+  '.java', '.kt', '.kts', '.scala',
+  // C-family
+  '.c', '.h', '.cpp', '.hpp', '.cc', '.cxx', '.cs',
+  // Go / Rust
+  '.go', '.rs',
+  // Ruby / PHP
+  '.rb', '.php', '.phtml',
+  // Swift / Objective-C
+  '.swift', '.m', '.mm',
+  // Shell
+  '.sh', '.bash', '.zsh',
+  // Config files that often contain secrets (scan-worthy)
+  '.env', '.envrc',
+  // Web
+  '.vue', '.svelte', '.html', '.htm',
+  // Database
+  '.sql',
+])
 export function detectLanguage(filename: string): SupportedLanguage {
   const ext = path.extname(filename).toLowerCase();
   
@@ -91,7 +118,9 @@ export async function getFilesToScan(dirPath: string): Promise<FileToScan[]> {
     const ext = path.extname(filePath).toLowerCase();
     const basename = path.basename(filePath);
 
-    if (skipExtensions.has(ext)) continue;
+    if (!SUPPORTED_CODE_EXTENSIONS.has(ext)) {
+      continue // Skip files that aren't recognized code/config
+    }
     if (skipExactNames.has(basename)) continue;
     if (basename.endsWith('.min.js') || basename.endsWith('.min.css')) continue;
 

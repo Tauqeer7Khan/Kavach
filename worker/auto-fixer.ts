@@ -342,10 +342,33 @@ function validateFix(
   const diff = Math.abs(fixedLen - originalLen)
   const percentDiff = diff / originalLen
 
-  if (percentDiff > 0.5) {
+  // Smarter validation:
+  // - Small files (< 500 chars): allow up to 300% growth 
+  //   (KAVACH-FIX comments + env var replacement adds significant %)
+  // - Medium files (< 2000 chars): allow up to 100% growth
+  // - Large files (>= 2000 chars): keep strict 50% threshold
+  let maxPercentDiff: number
+  if (originalLen < 500) {
+    maxPercentDiff = 3.0  // 300%
+  } else if (originalLen < 2000) {
+    maxPercentDiff = 1.0  // 100%
+  } else {
+    maxPercentDiff = 0.5  // 50%
+  }
+
+  // Also enforce absolute cap: fixed file should never be huge
+  const MAX_ABSOLUTE_SIZE = 1_000_000  // 1MB
+  if (fixedLen > MAX_ABSOLUTE_SIZE) {
     return {
       valid: false,
-      reason: `Fix changed file size by ${Math.round(percentDiff * 100)}% — unexpected`
+      reason: `Fix produced file > 1MB (${fixedLen} chars) — likely AI hallucination`
+    }
+  }
+
+  if (percentDiff > maxPercentDiff) {
+    return {
+      valid: false,
+      reason: `Fix changed file size by ${Math.round(percentDiff * 100)}% (limit: ${Math.round(maxPercentDiff * 100)}%) — unexpected`
     }
   }
 
@@ -616,12 +639,31 @@ export async function processAutoFixJob(fixJobId: string): Promise<void> {
       )
     }
 
+    // Normalize file paths to prevent duplicates
+    // (absolute path vs relative path pointing to same file)
+    function normalizeFilePath(filePath: string, storedContents: Array<{file_path: string}>): string {
+      // Try to find matching stored content (which has canonical path)
+      const match = storedContents.find(fc => {
+        if (fc.file_path === filePath) return true
+        if (fc.file_path.endsWith(filePath)) return true
+        if (filePath.endsWith(fc.file_path)) return true
+        const fcBase = fc.file_path.split('/').pop()
+        const fpBase = filePath.split('/').pop()
+        return fcBase && fpBase && fcBase === fpBase
+      })
+      
+      // Use canonical path if found, else basename
+      return match?.file_path ?? filePath.split('/').pop() ?? filePath
+    }
+
     // Group vulnerabilities by file
     const vulnsByFile = new Map<string, VulnForFix[]>()
     for (const vuln of vulns) {
       const fp = vuln.file_path ?? 'unknown'
-      if (!vulnsByFile.has(fp)) vulnsByFile.set(fp, [])
-      vulnsByFile.get(fp)!.push(vuln)
+      const canonicalPath = normalizeFilePath(fp, fileContents)
+      const existing = vulnsByFile.get(canonicalPath) ?? []
+      existing.push(vuln)
+      vulnsByFile.set(canonicalPath, existing)
     }
 
     const totalFiles = vulnsByFile.size
@@ -631,6 +673,32 @@ export async function processAutoFixJob(fixJobId: string): Promise<void> {
     // Process each file
     for (const [filePath, fileVulns] of vulnsByFile) {
       processedFiles++
+
+      // Safety net: Skip files that aren't code (defense in depth)
+      // Even if scanner accidentally passes them through, auto-fixer 
+      // should refuse to hallucinate fixes for markdown, text, etc.
+      const NON_FIXABLE_EXTENSIONS = new Set([
+        '.md', '.mdx', '.txt', '.log', '.csv', '.tsv',
+        '.json', '.yaml', '.yml', '.toml', '.xml',
+        '.lock', '.gitignore', '.gitattributes',
+        '.pdf', '.doc', '.docx',
+      ])
+
+      const fileExt = filePath.substring(filePath.lastIndexOf('.')).toLowerCase()
+      if (NON_FIXABLE_EXTENSIONS.has(fileExt)) {
+        console.warn(`[auto-fix] Skipping non-code file: ${filePath}`)
+        fixedFiles.push({
+          file_path: filePath,
+          status: 'skipped',
+          skip_reason: 'Not a code file — auto-fix only supports source code',
+          original_content: '',
+          fixed_content: '',
+          vulnerabilities_fixed: [],
+          lines_changed: 0,
+        })
+        continue
+      }
+
 
       await supabaseAdmin
         .from('auto_fix_jobs')
@@ -669,6 +737,24 @@ export async function processAutoFixJob(fixJobId: string): Promise<void> {
           lines_changed: 0,
           status: 'skipped',
           skip_reason: 'File content not found in storage',
+        })
+        continue
+      }
+
+      // Size guard: Large files often timeout during AI processing
+      // Files > 50KB are rare in real code and usually indicate 
+      // generated files or non-code content
+      const MAX_FIX_FILE_SIZE = 50_000  // 50KB
+      if (storedFile.file_content.length > MAX_FIX_FILE_SIZE) {
+        console.warn(`[auto-fix] Skipping large file (${storedFile.file_content.length} bytes): ${filePath}`)
+        fixedFiles.push({
+          file_path: filePath,
+          status: 'skipped',
+          skip_reason: `File too large (${Math.round(storedFile.file_content.length / 1000)}KB) — auto-fix supports files up to 50KB`,
+          original_content: storedFile.file_content,
+          fixed_content: '',
+          vulnerabilities_fixed: [],
+          lines_changed: 0,
         })
         continue
       }
