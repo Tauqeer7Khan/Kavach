@@ -234,10 +234,12 @@ export async function POST(
         .eq('id', prRecord.id)
 
       return NextResponse.json({
-        success:    true,
-        prNumber:   result.prNumber,
-        prUrl:      result.prUrl,
-        branchName: result.branchName,
+        success:     true,
+        prNumber:    result.prNumber,
+        prUrl:       result.prUrl,
+        branchName:  result.branchName,
+        filesPushed: successfulFixes.length,
+        vulnsFixed:  fixJob.total_vulns,
       })
     } else {
       await supabase

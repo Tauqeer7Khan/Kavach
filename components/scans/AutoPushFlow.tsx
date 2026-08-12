@@ -236,8 +236,8 @@ export function AutoPushFlow({
         prNumber: data.prNumber,
         prUrl: data.prUrl,
         branchName: data.branchName,
-        filesPushed: fixJob?.fixed_count ?? 0,
-        vulnsFixed: fixJob?.total_vulns ?? 0,
+        filesPushed: data.filesPushed ?? fixJob?.fixed_count ?? 0,
+        vulnsFixed: data.vulnsFixed ?? fixJob?.total_vulns ?? 0,
       })
       setPhase('success')
 
