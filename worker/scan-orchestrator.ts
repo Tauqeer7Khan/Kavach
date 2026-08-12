@@ -403,6 +403,21 @@ export async function orchestrateScan(job: Job<ScanJob>) {
               fullPath = path.join(tempDir, filePath)
             }
 
+            // Defense-in-depth: don't read non-code files even if a scanner 
+            // reports vulnerabilities in them (shouldn't happen after secret-
+            // scanner filter, but this is a safety net)
+            const NON_CODE_EXTS = new Set([
+              '.md', '.mdx', '.txt', '.log', '.csv', '.tsv',
+              '.json', '.yaml', '.yml', '.toml', '.xml',
+              '.lock', '.pdf', '.doc', '.docx',
+            ])
+
+            const fileExt = filePath.substring(filePath.lastIndexOf('.')).toLowerCase()
+            if (NON_CODE_EXTS.has(fileExt)) {
+              console.warn(`[scan-orchestrator] Skipping non-code file: ${filePath}`)
+              continue
+            }
+
             // ─── Try to read the file ──────────────────────
             let content: string
             try {

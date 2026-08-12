@@ -6,6 +6,8 @@ import { ParsedVulnerability, FileToScan } from '../../types';
 
 const execAsync = promisify(exec);
 
+import { SCANNABLE_EXTENSIONS, isScannableFile } from '../lib/scannable-extensions';
+
 export async function scanForSecrets(scanDir: string, files: FileToScan[]): Promise<ParsedVulnerability[]> {
   console.log('🔑 Running secret scanning...');
   
@@ -38,8 +40,24 @@ export async function scanForSecrets(scanDir: string, files: FileToScan[]): Prom
     }
   }
 
-  console.log(`🔑 Total unique secrets found: ${uniqueResults.length}`);
-  return uniqueResults;
+  // Filter out findings from non-code files (gitleaks scans 
+  // entire directory, ignoring our whitelist)
+  const originalCount = uniqueResults.length
+  const filteredVulnerabilities = uniqueResults.filter(vuln => {
+    const scannable = isScannableFile(vuln.file_path)
+    if (!scannable) {
+      console.log(`[secret-scanner] Filtered out ${vuln.file_path} (non-code file)`)
+    }
+    return scannable
+  })
+
+  const filteredCount = originalCount - filteredVulnerabilities.length
+  if (filteredCount > 0) {
+    console.log(`[secret-scanner] Filtered ${filteredCount} findings from non-code files`)
+  }
+
+  console.log(`🔑 Total unique secrets found: ${filteredVulnerabilities.length}`);
+  return filteredVulnerabilities;
 }
 
 export async function runGitleaksScan(scanDir: string): Promise<ParsedVulnerability[]> {
