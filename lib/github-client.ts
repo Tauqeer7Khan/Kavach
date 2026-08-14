@@ -13,23 +13,23 @@ export interface GitHubFileForPR {
 }
 
 export interface CreatePROptions {
-  accessToken:   string
-  owner:         string
-  repo:          string
-  baseBranch:    string
-  newBranch:     string
-  files:         GitHubFileForPR[]
+  accessToken: string
+  owner: string
+  repo: string
+  baseBranch: string
+  newBranch: string
+  files: GitHubFileForPR[]
   commitMessage: string
-  prTitle:       string
-  prBody:        string
+  prTitle: string
+  prBody: string
 }
 
 export interface CreatePRResult {
-  success:    boolean
-  prNumber?:  number
-  prUrl?:     string
+  success: boolean
+  prNumber?: number
+  prUrl?: string
   branchName?: string
-  error?:     string
+  error?: string
   errorCode?: 'no_access' | 'branch_exists' | 'base_missing' | 'rate_limit' | 'auth_expired' | 'unknown'
 }
 
@@ -64,8 +64,8 @@ export async function verifyRepoAccess(
     const octokit = new Octokit({ auth: accessToken })
     const { data } = await octokit.repos.get({ owner, repo })
     return {
-      hasAccess:     true,
-      canPush:       data.permissions?.push ?? false,
+      hasAccess: true,
+      canPush: data.permissions?.push ?? false,
       defaultBranch: data.default_branch,
     }
   } catch (err) {
@@ -117,14 +117,14 @@ export async function createSecurityFixPR(opts: CreatePROptions): Promise<Create
     try {
       const { data } = await octokit.git.getRef({
         owner: opts.owner,
-        repo:  opts.repo,
-        ref:   `heads/${opts.baseBranch}`,
+        repo: opts.repo,
+        ref: `heads/${opts.baseBranch}`,
       })
       baseSha = data.object.sha
     } catch {
       return {
-        success:   false,
-        error:     `Base branch '${opts.baseBranch}' not found`,
+        success: false,
+        error: `Base branch '${opts.baseBranch}' not found`,
         errorCode: 'base_missing',
       }
     }
@@ -134,8 +134,8 @@ export async function createSecurityFixPR(opts: CreatePROptions): Promise<Create
     try {
       await octokit.git.getRef({
         owner: opts.owner,
-        repo:  opts.repo,
-        ref:   `heads/${finalBranch}`,
+        repo: opts.repo,
+        ref: `heads/${finalBranch}`,
       })
       // Branch exists — add timestamp suffix
       finalBranch = `${opts.newBranch}-${Date.now()}`
@@ -146,15 +146,15 @@ export async function createSecurityFixPR(opts: CreatePROptions): Promise<Create
     // 3. Create new branch
     await octokit.git.createRef({
       owner: opts.owner,
-      repo:  opts.repo,
-      ref:   `refs/heads/${finalBranch}`,
-      sha:   baseSha,
+      repo: opts.repo,
+      ref: `refs/heads/${finalBranch}`,
+      sha: baseSha,
     })
 
     // 4. Get base commit tree
     const { data: baseCommit } = await octokit.git.getCommit({
-      owner:      opts.owner,
-      repo:       opts.repo,
+      owner: opts.owner,
+      repo: opts.repo,
       commit_sha: baseSha,
     })
 
@@ -162,71 +162,71 @@ export async function createSecurityFixPR(opts: CreatePROptions): Promise<Create
     const blobs = await Promise.all(
       opts.files.map(async (file) => {
         const { data } = await octokit.git.createBlob({
-          owner:    opts.owner,
-          repo:     opts.repo,
-          content:  Buffer.from(file.content, 'utf-8').toString('base64'),
+          owner: opts.owner,
+          repo: opts.repo,
+          content: Buffer.from(file.content, 'utf-8').toString('base64'),
           encoding: 'base64',
         })
         return {
           path: file.path,
           mode: '100644' as const,
           type: 'blob' as const,
-          sha:  data.sha,
+          sha: data.sha,
         }
       })
     )
 
     // 6. Create new tree
     const { data: newTree } = await octokit.git.createTree({
-      owner:     opts.owner,
-      repo:      opts.repo,
+      owner: opts.owner,
+      repo: opts.repo,
       base_tree: baseCommit.tree.sha,
-      tree:      blobs,
+      tree: blobs,
     })
 
     // 7. Create commit
     const { data: newCommit } = await octokit.git.createCommit({
-      owner:   opts.owner,
-      repo:    opts.repo,
+      owner: opts.owner,
+      repo: opts.repo,
       message: opts.commitMessage,
-      tree:    newTree.sha,
+      tree: newTree.sha,
       parents: [baseSha],
     })
 
     // 8. Point new branch at commit
     await octokit.git.updateRef({
       owner: opts.owner,
-      repo:  opts.repo,
-      ref:   `heads/${finalBranch}`,
-      sha:   newCommit.sha,
+      repo: opts.repo,
+      ref: `heads/${finalBranch}`,
+      sha: newCommit.sha,
     })
 
     // 9. Open pull request
     const { data: pr } = await octokit.pulls.create({
       owner: opts.owner,
-      repo:  opts.repo,
+      repo: opts.repo,
       title: opts.prTitle,
-      body:  opts.prBody,
-      head:  finalBranch,
-      base:  opts.baseBranch,
+      body: opts.prBody,
+      head: finalBranch,
+      base: opts.baseBranch,
     })
 
     // 10. Add labels (best-effort — don't fail if this errors)
     try {
       await octokit.issues.addLabels({
-        owner:        opts.owner,
-        repo:         opts.repo,
+        owner: opts.owner,
+        repo: opts.repo,
         issue_number: pr.number,
-        labels:       ['security', 'kavach', 'automated'],
+        labels: ['security', 'kavach', 'automated'],
       })
     } catch {
       // Labels optional
     }
 
     return {
-      success:    true,
-      prNumber:   pr.number,
-      prUrl:      pr.html_url,
+      success: true,
+      prNumber: pr.number,
+      prUrl: pr.html_url,
       branchName: finalBranch,
     }
 
@@ -254,11 +254,11 @@ export async function createSecurityFixPR(opts: CreatePROptions): Promise<Create
 // ─────────────────────────────────────────────────────────
 
 export function buildPRDescription(input: {
-  totalVulns:      number
-  filesFixed:      number
-  scanUrl?:        string
-  severityCounts:  { critical: number; high: number; medium: number; low: number }
-  fixedFilesList:  Array<{ path: string; vulnsFixed: number; linesChanged: number }>
+  totalVulns: number
+  filesFixed: number
+  scanUrl?: string
+  severityCounts: { critical: number; high: number; medium: number; low: number }
+  fixedFilesList: Array<{ path: string; vulnsFixed: number; linesChanged: number }>
 }): string {
   const { totalVulns, filesFixed, scanUrl, severityCounts, fixedFilesList } = input
   const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })

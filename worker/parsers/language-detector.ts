@@ -63,21 +63,6 @@ export async function detectLanguagesInDirectory(dirPath: string): Promise<Suppo
 }
 
 export async function getFilesToScan(dirPath: string): Promise<FileToScan[]> {
-  const skipExtensions = new Set([
-    // Images
-    '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.bmp',
-    // Videos/Audio
-    '.mp3', '.mp4', '.avi', '.mov', '.wav',
-    // Fonts
-    '.woff', '.woff2', '.ttf', '.eot', '.otf',
-    // Archives
-    '.zip', '.tar', '.gz', '.rar', '.7z',
-    // Binaries
-    '.exe', '.dll', '.so', '.dylib',
-    // System
-    '.DS_Store', 'Thumbs.db'
-  ]);
-
   const skipExactNames = new Set([
     'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml',
     'Gemfile.lock', 'poetry.lock', 'composer.lock',

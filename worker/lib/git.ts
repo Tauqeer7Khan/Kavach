@@ -1,6 +1,7 @@
 import simpleGit, { SimpleGit } from 'simple-git';
 import fs from 'fs/promises';
 import path from 'path';
+import { isScannableFile } from './scannable-extensions';
 
 export interface CloneResult {
   success: boolean;
@@ -119,8 +120,6 @@ async function getDirectorySize(dir: string): Promise<number> {
 }
 
 async function countCodeFiles(dir: string): Promise<number> {
-  const codeExtensions = ['.js', '.jsx', '.ts', '.tsx', '.py', '.php', 
-                          '.java', '.go', '.rb', '.rs', '.c', '.cpp', '.cs'];
   let count = 0;
   
   async function walk(currentDir: string) {
@@ -134,11 +133,10 @@ async function countCodeFiles(dir: string): Promise<number> {
         if (file.isDirectory()) {
           await walk(filePath);
         } else {
-          const ext = path.extname(file.name).toLowerCase();
           // Skip minified and maps
-          if (file.name.includes('.min.') || ext === '.map') continue;
+          if (file.name.includes('.min.') || file.name.endsWith('.map')) continue;
           
-          if (codeExtensions.includes(ext)) {
+          if (isScannableFile(file.name)) {
             count++;
           }
         }
