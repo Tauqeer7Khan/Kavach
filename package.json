@@ -28,6 +28,7 @@
     "next": "14.2.35",
     "ollama": "^0.6.3",
     "pg-boss": "^12.27.0",
+    "posthog-js": "^1.417.1",
     "react": "^18",
     "react-diff-viewer-continued": "^4.4.0",
     "react-dom": "^18",

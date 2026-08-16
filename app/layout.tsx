@@ -3,7 +3,8 @@ import { Inter, Space_Grotesk, JetBrains_Mono, Instrument_Serif } from 'next/fon
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toast";
-
+import { PHProvider } from './providers'
+import PostHogPageView from './PostHogPageView'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' })
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains-mono' })
@@ -46,8 +47,11 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} bg-[#FAFAF9] dark:bg-[#09090B] text-[#18181B] dark:text-[#FAFAF9] font-body min-h-screen antialiased transition-colors duration-300`}>
-        {children}
-        <Toaster />
+        <PHProvider>
+          <PostHogPageView />
+          {children}
+          <Toaster />
+        </PHProvider>
       </body>
     </html>
   );
