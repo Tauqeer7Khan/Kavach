@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Shield,
   RotateCcw,
+  Download,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
@@ -63,11 +64,12 @@ export function AutoFixButton({
   const [phase, setPhase] = React.useState<
     'idle' | 'confirming' | 'running' | 'done' | 'error'
   >('idle')
-  const [fixJob,    setFixJob]    = React.useState<FixJob | null>(null)
-  const [errorMsg,  setErrorMsg]  = React.useState('')
+  const [fixJob,     setFixJob]     = React.useState<FixJob | null>(null)
+  const [errorMsg,   setErrorMsg]   = React.useState('')
+  const [downloading, setDownloading] = React.useState(false)
   const pollRef = React.useRef<NodeJS.Timeout | null>(null)
 
-  const isPro  = userPlan === 'pro' || userPlan === 'enterprise'
+  const isPro   = userPlan === 'pro' || userPlan === 'enterprise'
   const noVulns = vulnerabilityCount === 0
 
   // ── Cleanup polling on unmount ─────────────────────────
@@ -168,6 +170,58 @@ export function AutoFixButton({
       })
     }
   }, [scanId, vulnerabilityIds, startPolling, toast])
+
+  // ── Download ZIP of fixed files ────────────────────────
+  const handleDownloadZip = React.useCallback(async () => {
+    setDownloading(true)
+    try {
+      const res = await fetch(`/api/scans/${scanId}/auto-fix/download`)
+
+      if (!res.ok) {
+        // Try to parse error JSON
+        let errorMessage = 'Failed to download fixes'
+        try {
+          const data = await res.json()
+          errorMessage = data.message ?? data.error ?? errorMessage
+        } catch {
+          // Response wasn't JSON
+        }
+        throw new Error(errorMessage)
+      }
+
+      // Get the blob and trigger browser download
+      const blob = await res.blob()
+      const url  = window.URL.createObjectURL(blob)
+      const a    = document.createElement('a')
+
+      // Extract filename from Content-Disposition, else fallback
+      const disposition = res.headers.get('Content-Disposition') ?? ''
+      const match       = disposition.match(/filename="?([^"]+)"?/)
+      const filename    = match?.[1] ?? `kavach-fixes-${scanId.slice(0, 8)}.zip`
+
+      a.href     = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+
+      toast({
+        title:       '📦 Download Started',
+        description: `${filename} — check your downloads folder.`,
+      })
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Download failed'
+      toast({
+        title:       'Download Failed',
+        description: errorMessage,
+        variant:     'destructive',
+      })
+    } finally {
+      setDownloading(false)
+    }
+  }, [scanId, toast])
 
   // ── Reset ──────────────────────────────────────────────
   const handleReset = () => {
@@ -274,29 +328,63 @@ export function AutoFixButton({
     )
   }
 
-  // ── DONE — show results ────────────────────────────────
+  // ── DONE — show results + download button ──────────────
   if (phase === 'done' && fixJob) {
+    const hasDownloadableFiles = fixJob.fixed_count > 0
+
     return (
-      <div className="flex w-full items-center justify-between gap-2 rounded-lg border border-emerald-500/30 bg-emerald-600/10 px-4 py-2">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-          <span className="text-sm text-zinc-300">
-            <strong className="text-emerald-400">{fixJob.fixed_count}</strong> fixed
-            {fixJob.skipped_count > 0 && (
-              <span className="text-zinc-500 ml-1">
-                · {fixJob.skipped_count} skipped
-              </span>
-            )}
-          </span>
+      <div className="w-full space-y-2">
+        {/* Result summary */}
+        <div className="flex w-full items-center justify-between gap-2 rounded-lg border border-emerald-500/30 bg-emerald-600/10 px-4 py-2">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+            <span className="text-sm text-zinc-300">
+              <strong className="text-emerald-400">{fixJob.fixed_count}</strong> fixed
+              {fixJob.skipped_count > 0 && (
+                <span className="text-zinc-500 ml-1">
+                  · {fixJob.skipped_count} skipped
+                </span>
+              )}
+              {fixJob.failed_count > 0 && (
+                <span className="text-red-400 ml-1">
+                  · {fixJob.failed_count} failed
+                </span>
+              )}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleReset}
+            className="ml-2 h-7 text-zinc-400 hover:text-zinc-200 text-xs px-2"
+          >
+            Reset
+          </Button>
         </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={handleReset}
-          className="ml-2 h-7 text-zinc-400 hover:text-zinc-200 text-xs px-2"
-        >
-          Reset
-        </Button>
+
+        {/* Download ZIP button */}
+        {hasDownloadableFiles && (
+          <Button
+            onClick={handleDownloadZip}
+            disabled={downloading}
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium shadow-lg shadow-emerald-500/20"
+          >
+            {downloading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Preparing ZIP...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                Download Fixed Files (ZIP)
+                <span className="ml-1 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">
+                  {fixJob.fixed_count}
+                </span>
+              </>
+            )}
+          </Button>
+        )}
       </div>
     )
   }

@@ -6,6 +6,132 @@ import { ParsedVulnerability, VulnerabilitySeverity } from '../../types';
 
 const execAsync = promisify(exec);
 
+// ═══════════════════════════════════════════════════════════
+// PRETTY NAME MAPPING
+// Converts raw Semgrep rule IDs into human-readable names.
+// Falls back to smart title-casing if no explicit mapping exists.
+// ═══════════════════════════════════════════════════════════
+
+const PRETTY_NAME_MAP: Record<string, string> = {
+  // Injection family
+  'code-string-concat':          'String Concatenation in Query',
+  'sql-injection':               'SQL Injection',
+  'sqli':                        'SQL Injection',
+  'tainted-sql-string':          'SQL Injection (Tainted Input)',
+  'nosqli':                      'NoSQL Injection',
+  'ldap-injection':              'LDAP Injection',
+  'xml-injection':               'XML Injection',
+  'code-injection':              'Code Injection',
+  'eval-injection':              'Eval Code Injection',
+  'command-injection':           'Command Injection',
+  'shell-injection':             'Shell Command Injection',
+  'os-command-injection':        'OS Command Injection',
+
+  // XSS
+  'xss':                         'Cross-Site Scripting (XSS)',
+  'reflected-xss':               'Reflected XSS',
+  'stored-xss':                  'Stored XSS',
+  'dom-xss':                     'DOM-based XSS',
+  'react-dangerouslysetinnerhtml': 'Dangerous innerHTML in React',
+
+  // Path traversal
+  'path-traversal':              'Path Traversal',
+  'path-join-resolve-traversal': 'Path Traversal (path.join)',
+  'directory-traversal':         'Directory Traversal',
+  'zip-slip':                    'Zip Slip Vulnerability',
+
+  // Auth & session
+  'weak-jwt-secret':             'Weak JWT Secret',
+  'missing-authentication':      'Missing Authentication',
+  'hardcoded-credentials':       'Hardcoded Credentials',
+  'session-fixation':            'Session Fixation',
+
+  // Crypto
+  'weak-crypto':                 'Weak Cryptography',
+  'md5-hash':                    'Weak Hash (MD5)',
+  'sha1-hash':                   'Weak Hash (SHA-1)',
+  'insecure-cipher':             'Insecure Cipher',
+  'ecb-mode':                    'Insecure ECB Encryption Mode',
+  'weak-random':                 'Insecure Randomness',
+  'math-random-security':        'Insecure Math.random() Usage',
+
+  // Secrets
+  'hardcoded-secret':            'Hardcoded Secret',
+  'hardcoded-api-key':           'Hardcoded API Key',
+  'aws-secret-key':              'Hardcoded AWS Secret Key',
+  'stripe-access-token':         'Hardcoded Stripe Token',
+  'github-token':                'Hardcoded GitHub Token',
+  'private-key':                 'Exposed Private Key',
+  'jwt-hardcoded-secret':        'Hardcoded JWT Secret',
+
+  // SSRF & network
+  'ssrf':                        'Server-Side Request Forgery (SSRF)',
+  'open-redirect':               'Open Redirect',
+  'cors-misconfig':              'CORS Misconfiguration',
+  'insecure-cors':               'Insecure CORS Policy',
+
+  // Deserialization
+  'insecure-deserialization':    'Insecure Deserialization',
+  'yaml-unsafe-load':            'Unsafe YAML Deserialization',
+  'pickle-load':                 'Unsafe Pickle Deserialization',
+
+  // File operations
+  'spawn-shell-true':            'Shell Command Injection (spawn shell:true)',
+  'child-process-command':       'Command Injection in child_process',
+  'unsafe-file-upload':          'Unsafe File Upload',
+  'express-res-sendfile':        'Unsafe File Send (sendFile)',
+  'unrestricted-file-write':     'Unrestricted File Write',
+
+  // Access control
+  'missing-rate-limit':          'Missing Rate Limiting',
+  'idor':                        'Insecure Direct Object Reference (IDOR)',
+  'missing-csrf':                'Missing CSRF Protection',
+
+  // Misc
+  'sensitive-data-logging':      'Sensitive Data Logging',
+  'prototype-pollution':         'Prototype Pollution',
+  'regex-dos':                   'Regular Expression DoS (ReDoS)',
+  'timing-attack':               'Timing Attack Vulnerability',
+  'null-pointer':                'Null Pointer Dereference',
+  'race-condition':              'Race Condition',
+};
+
+/**
+ * Convert a raw Semgrep rule slug into a human-readable name.
+ * 
+ * Examples:
+ *   "javascript.express.security.audit.code-string-concat" 
+ *     → "String Concatenation in Query"
+ *   "python.django.security.audit.xss" 
+ *     → "Cross-Site Scripting (XSS)"
+ *   "some-unknown-rule-name" 
+ *     → "Some Unknown Rule Name"  (fallback title-case)
+ */
+function prettifyRuleName(rawCheckId: string): string {
+  // Get the last segment (actual rule name)
+  const lastSegment = rawCheckId.split('.').pop() ?? rawCheckId
+
+  // Try exact match in the pretty name map
+  const exactMatch = PRETTY_NAME_MAP[lastSegment.toLowerCase()]
+  if (exactMatch) return exactMatch
+
+  // Try partial match — check if the slug contains any known keyword
+  const lowerSlug = lastSegment.toLowerCase()
+  for (const [key, value] of Object.entries(PRETTY_NAME_MAP)) {
+    if (lowerSlug.includes(key)) return value
+  }
+
+  // Fallback: convert kebab-case / snake_case → Title Case
+  return lastSegment
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+    .trim()
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAIN SEMGREP RUNNER
+// ═══════════════════════════════════════════════════════════
+
 export async function runSemgrepAnalysis(scanDir: string, languages: string[]): Promise<ParsedVulnerability[]> {
   console.log('🔍 Running Semgrep static analysis...');
   
@@ -108,7 +234,8 @@ export async function runSemgrepAnalysis(scanDir: string, languages: string[]): 
       }
 
       vulnerabilities.push({
-        name: result.check_id.split('.').pop() || result.check_id,
+        // ✨ NEW: Use pretty name instead of raw rule slug
+        name: prettifyRuleName(result.check_id),
         description: result.extra?.message || 'Semgrep finding',
         severity,
         owasp_category: owaspInfo.owasp_category,

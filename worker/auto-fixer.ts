@@ -66,13 +66,47 @@ interface FileFixResult {
 // ─────────────────────────────────────────────────────────
 
 function countChangedLines(original: string, fixed: string): number {
-  const origLines = original.split('\n')
-  const fixLines = fixed.split('\n')
-  let count = 0
-  for (let i = 0; i < Math.max(origLines.length, fixLines.length); i++) {
-    if (origLines[i] !== fixLines[i]) count++
+  // Use LCS (Longest Common Subsequence) approach for accurate diff.
+  // Ignores KAVACH-FIX comments so metric reflects REAL code changes.
+  
+  const isKavachFixComment = (line: string): boolean => {
+    return /^\s*\/\/\s*KAVACH-FIX:/i.test(line)
   }
-  return count
+
+  // Filter out KAVACH-FIX comments from both sides before diffing
+  const origLines = original.split('\n').filter(l => !isKavachFixComment(l))
+  const fixLines  = fixed.split('\n').filter(l => !isKavachFixComment(l))
+
+  // Trim trailing whitespace on each line for fair comparison
+  const normalize = (lines: string[]) => lines.map(l => l.trimEnd())
+  const a = normalize(origLines)
+  const b = normalize(fixLines)
+
+  // Build LCS length matrix
+  const m = a.length
+  const n = b.length
+  const dp: number[][] = Array.from({ length: m + 1 }, () => 
+    new Array(n + 1).fill(0)
+  )
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (a[i - 1] === b[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
+      }
+    }
+  }
+
+  const lcsLength = dp[m][n]
+  
+  // Changed lines = lines removed + lines added
+  // (Total lines on both sides) - (2 * common lines)
+  const linesRemoved = m - lcsLength
+  const linesAdded   = n - lcsLength
+  
+  return linesRemoved + linesAdded
 }
 
 // ─────────────────────────────────────────────────────────
