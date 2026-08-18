@@ -13,6 +13,7 @@ import { AutoFixButton, type FixJob } from '@/components/scans/AutoFixButton'
 import { AutoPushFlow }               from '@/components/scans/AutoPushFlow'
 import { FixActionsCard }             from '@/components/scans/FixActionsCard'
 import { DiffViewer }                 from '@/components/scans/DiffViewer'
+import { DownloadReportButton }       from '@/components/scans/DownloadReportButton'
 import { detectLanguage, type ScanReportForPrompt } from '@/lib/prompt-generator'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -451,6 +452,10 @@ export default function ScanDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <DownloadReportButton
+            scanId={report.id}
+            userPlan={userPlan}
+          />
           <Button
             variant="outline"
             size="sm"
