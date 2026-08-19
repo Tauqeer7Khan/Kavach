@@ -6,13 +6,14 @@ import {
   Zap,
   Lock,
   Loader2,
-  CheckCircle2,
   XCircle,
   AlertTriangle,
   ChevronRight,
   Shield,
   RotateCcw,
   Download,
+  Eye,
+  GitPullRequest,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
@@ -40,6 +41,7 @@ export interface FixedFile {
   vulnerabilities_fixed: string[]
   lines_changed: number
   skip_reason?: string
+  confidence?: import('@/types').ConfidenceScore   // V2.2
 }
 
 interface AutoFixButtonProps {
@@ -48,6 +50,8 @@ interface AutoFixButtonProps {
   vulnerabilityIds:  string[]
   vulnerabilityCount: number
   onFixComplete:     (fixJob: FixJob) => void
+  onViewDiff?:       (fixJob: FixJob) => void   // V2.2 — reopen diff viewer
+  onCreatePR?:       (fixJob: FixJob) => void   // V2.2 — open PR modal (Enterprise)
 }
 
 // ── Component ──────────────────────────────────────────────
@@ -58,6 +62,8 @@ export function AutoFixButton({
   vulnerabilityIds,
   vulnerabilityCount,
   onFixComplete,
+  onViewDiff,
+  onCreatePR,
 }: AutoFixButtonProps) {
   const { toast } = useToast()
 
@@ -328,39 +334,24 @@ export function AutoFixButton({
     )
   }
 
-  // ── DONE — show results + download button ──────────────
+  // ── DONE — show results + download button + view diff + PR ─────
   if (phase === 'done' && fixJob) {
     const hasDownloadableFiles = fixJob.fixed_count > 0
+    const isEnterprise = userPlan === 'enterprise'
 
     return (
       <div className="w-full space-y-2">
-        {/* Result summary */}
-        <div className="flex w-full items-center justify-between gap-2 rounded-lg border border-emerald-500/30 bg-emerald-600/10 px-4 py-2">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-            <span className="text-sm text-zinc-300">
-              <strong className="text-emerald-400">{fixJob.fixed_count}</strong> fixed
-              {fixJob.skipped_count > 0 && (
-                <span className="text-zinc-500 ml-1">
-                  · {fixJob.skipped_count} skipped
-                </span>
-              )}
-              {fixJob.failed_count > 0 && (
-                <span className="text-red-400 ml-1">
-                  · {fixJob.failed_count} failed
-                </span>
-              )}
-            </span>
-          </div>
+        {/* View Diff button — explicit and prominent (V2.2) */}
+        {hasDownloadableFiles && onViewDiff && (
           <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleReset}
-            className="ml-2 h-7 text-zinc-400 hover:text-zinc-200 text-xs px-2"
+            onClick={() => onViewDiff(fixJob)}
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2 border-zinc-700 hover:bg-white/5 text-zinc-300"
           >
-            Reset
+            <Eye className="h-4 w-4" />
+            View Diff & Confidence Scores
           </Button>
-        </div>
+        )}
 
         {/* Download ZIP button */}
         {hasDownloadableFiles && (
@@ -383,6 +374,20 @@ export function AutoFixButton({
                 </span>
               </>
             )}
+          </Button>
+        )}
+
+        {/* Push to GitHub PR button — Enterprise only (V2.2) */}
+        {hasDownloadableFiles && isEnterprise && onCreatePR && (
+          <Button
+            onClick={() => onCreatePR(fixJob)}
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white font-medium shadow-lg shadow-purple-500/20"
+          >
+            <GitPullRequest className="h-4 w-4" />
+            Push to GitHub PR
+            <span className="ml-1 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">
+              {fixJob.fixed_count}
+            </span>
           </Button>
         )}
       </div>

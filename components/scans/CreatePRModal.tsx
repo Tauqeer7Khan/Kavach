@@ -9,6 +9,7 @@ import {
   ExternalLink,
   AlertCircle,
   GitBranch,
+  ChevronDown,
 } from 'lucide-react'
 import {
   Dialog,
@@ -43,12 +44,56 @@ export function CreatePRModal({
   const [phase, setPhase]           = React.useState<Phase>('config')
   const [repoUrl, setRepoUrl]       = React.useState(initialRepoUrl ?? '')
   const [baseBranch, setBaseBranch] = React.useState('main')
-  const [prTitle, setPrTitle]       = React.useState(
-    `🛡️ Security fixes by KAVACH (${filesCount} ${filesCount === 1 ? 'file' : 'files'})`
-  )
   const [prUrl, setPrUrl]           = React.useState('')
   const [prNumber, setPrNumber]     = React.useState<number | null>(null)
   const [error, setError]           = React.useState('')
+
+  // V2.2 — Branch dropdown state
+  const [branches, setBranches]           = React.useState<string[]>([])
+  const [loadingBranches, setLoading]     = React.useState(false)
+  const [branchError, setBranchError]     = React.useState('')
+  const [dropdownOpen, setDropdownOpen]   = React.useState(false)
+
+  // V2.2 — Auto-fetch branches when modal opens (and we have a repo URL)
+  React.useEffect(() => {
+    if (!isOpen || !repoUrl.trim()) return
+
+    let cancelled = false
+    const fetchBranches = async () => {
+      setLoading(true)
+      setBranchError('')
+      try {
+        const res = await fetch(
+          `/api/github/branches?repoUrl=${encodeURIComponent(repoUrl.trim())}`
+        )
+        const data = await res.json()
+
+        if (cancelled) return
+
+        if (!res.ok) {
+          setBranchError(data.message ?? data.error ?? 'Failed to load branches')
+          setBranches([])
+          return
+        }
+
+        setBranches(data.branches ?? [])
+        // Auto-select the default branch if available
+        if (data.defaultBranch) {
+          setBaseBranch(data.defaultBranch)
+        }
+      } catch {
+        if (!cancelled) {
+          setBranchError('Network error — could not load branches')
+          setBranches([])
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    fetchBranches()
+    return () => { cancelled = true }
+  }, [isOpen, repoUrl])
 
   const handleCreate = async () => {
     if (!repoUrl.trim()) {
@@ -64,6 +109,7 @@ export function CreatePRModal({
     setError('')
 
     try {
+      // V2.2 — No more prTitle in body; backend auto-generates it
       const res = await fetch(`/api/scans/${scanId}/auto-fix/create-pr`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -71,7 +117,6 @@ export function CreatePRModal({
           fixJobId,
           repoUrl:    repoUrl.trim(),
           baseBranch: baseBranch.trim() || 'main',
-          prTitle:    prTitle.trim(),
         }),
       })
 
@@ -143,33 +188,74 @@ export function CreatePRModal({
                 />
               </div>
 
+              {/* V2.2 — Base Branch DROPDOWN (replaces text input) */}
               <div>
                 <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                   Base branch
                 </label>
                 <div className="mt-1.5 relative">
-                  <GitBranch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                  <input
-                    type="text"
-                    value={baseBranch}
-                    onChange={(e) => setBaseBranch(e.target.value)}
-                    placeholder="main"
-                    className="w-full rounded-lg border border-zinc-700 bg-zinc-950 text-zinc-100 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    disabled={loadingBranches || branches.length === 0}
+                    className="w-full flex items-center justify-between rounded-lg border border-zinc-700 bg-zinc-950 text-zinc-100 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50 disabled:opacity-60 disabled:cursor-not-allowed hover:bg-zinc-900 transition-colors"
+                  >
+                    <GitBranch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                    <span className="text-left flex-1 truncate">
+                      {loadingBranches ? (
+                        <span className="flex items-center gap-2 text-zinc-500">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Loading branches...
+                        </span>
+                      ) : branches.length === 0 && branchError ? (
+                        <span className="text-red-400 text-xs">{branchError}</span>
+                      ) : (
+                        baseBranch
+                      )}
+                    </span>
+                    <ChevronDown className={`h-4 w-4 text-zinc-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Dropdown menu */}
+                  {dropdownOpen && branches.length > 0 && (
+                    <>
+                      {/* Backdrop to close on outside click */}
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setDropdownOpen(false)}
+                      />
+                      <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-950 shadow-xl">
+                        {branches.map((branch) => (
+                          <button
+                            key={branch}
+                            type="button"
+                            onClick={() => {
+                              setBaseBranch(branch)
+                              setDropdownOpen(false)
+                            }}
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-zinc-800 transition-colors ${
+                              branch === baseBranch
+                                ? 'bg-purple-500/10 text-purple-300'
+                                : 'text-zinc-300'
+                            }`}
+                          >
+                            <GitBranch className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                            <span className="truncate">{branch}</span>
+                            {branch === baseBranch && (
+                              <CheckCircle2 className="h-3.5 w-3.5 ml-auto text-purple-400 shrink-0" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
+                {branchError && !loadingBranches && (
+                  <p className="mt-1 text-[11px] text-red-400/80">{branchError}</p>
+                )}
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                  PR title
-                </label>
-                <input
-                  type="text"
-                  value={prTitle}
-                  onChange={(e) => setPrTitle(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-zinc-700 bg-zinc-950 text-zinc-100 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/50"
-                />
-              </div>
+              {/* V2.2 — PR TITLE FIELD REMOVED (backend auto-generates it) */}
 
               <div className="rounded-lg bg-purple-500/5 border border-purple-500/20 p-3">
                 <div className="flex items-start gap-2">

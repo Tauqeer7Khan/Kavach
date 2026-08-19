@@ -138,6 +138,47 @@ export async function GET(
       )
     }
 
+    // ── V2.2 — Fetch latest completed auto-fix job (Pro+ only) ──
+    // Confidence data lives in fixed_files JSONB. Only fetch for Pro/Enterprise.
+    let autoFixData: {
+      fixed_files: Array<{
+        file_path: string
+        confidence?: {
+          overall: number
+          band: string
+          label: string
+          recommendation: string
+        }
+        vulnerabilities_fixed?: string[]
+        lines_changed?: number
+        status?: string
+      }>
+      fixed_count: number
+      total_vulns: number
+      completed_at: string | null
+    } | null = null
+
+    if (userPlan === 'pro' || userPlan === 'enterprise') {
+      const { data: fixJob } = await supabase
+        .from('auto_fix_jobs')
+        .select('fixed_files, fixed_count, total_vulns, completed_at')
+        .eq('scan_id', scanId)
+        .eq('user_id', user.id)
+        .eq('status', 'completed')
+        .order('completed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (fixJob && Array.isArray(fixJob.fixed_files)) {
+        autoFixData = {
+          fixed_files: fixJob.fixed_files as NonNullable<typeof autoFixData>['fixed_files'],
+          fixed_count: fixJob.fixed_count ?? 0,
+          total_vulns: fixJob.total_vulns ?? 0,
+          completed_at: fixJob.completed_at,
+        }
+      }
+    }
+
     // ── Generate report in requested format ────────────
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ai-kavach.vercel.app'
     let reportContent: string
@@ -149,6 +190,7 @@ export async function GET(
           vulnerabilities: vulnerabilities ?? [],
           userPlan,
           siteUrl,
+          autoFixData,  // V2.2 — confidence data
         })
         break
       case 'json':
@@ -157,6 +199,7 @@ export async function GET(
           vulnerabilities: vulnerabilities ?? [],
           userPlan,
           siteUrl,
+          autoFixData,  // V2.2 — confidence data
         })
         break
       case 'sarif':
@@ -164,6 +207,7 @@ export async function GET(
           scan,
           vulnerabilities: vulnerabilities ?? [],
           siteUrl,
+          autoFixData,  // V2.2 — confidence data
         })
         break
     }

@@ -419,6 +419,71 @@ export const SEVERITY_CONFIG: Record<VulnerabilitySeverity, { color: string; bgC
   }
 }
 
+// ================================
+// FIX CONFIDENCE SCORE TYPES (V2.2)
+// ================================
+
+export type ConfidenceBand = 'high' | 'medium' | 'low' | 'very_low'
+
+export interface ConfidenceFactors {
+  vuln_type_match: number      // 0-100: How well-known is this pattern
+  fix_size: number             // 0-100: Smaller edits = higher confidence
+  detection_consensus: number  // 0-100: How many engines detected it
+  code_complexity: number      // 0-100: Simpler code = higher confidence
+  test_coverage_hint: number   // 0-100: Does file have tests?
+  ai_self_rating: number       // 0-100: AI rates its own fix
+}
+
+export interface ConfidenceScore {
+  overall: number              // 0-100 weighted average
+  band: ConfidenceBand         // Categorized band
+  label: string                // Human-readable label
+  recommendation: string       // What user should do
+  factors: ConfidenceFactors   // Individual factor breakdown
+}
+
+export const CONFIDENCE_BANDS: Record<ConfidenceBand, {
+  min: number
+  max: number
+  label: string
+  recommendation: string
+  color: string
+  emoji: string
+}> = {
+  high: {
+    min: 90,
+    max: 100,
+    label: 'High Confidence',
+    recommendation: 'Safe to merge without extensive review',
+    color: 'emerald',
+    emoji: '🟢',
+  },
+  medium: {
+    min: 70,
+    max: 89,
+    label: 'Medium Confidence',
+    recommendation: 'Review recommended before merging',
+    color: 'yellow',
+    emoji: '🟡',
+  },
+  low: {
+    min: 50,
+    max: 69,
+    label: 'Low Confidence',
+    recommendation: 'Careful review needed before merging',
+    color: 'orange',
+    emoji: '🟠',
+  },
+  very_low: {
+    min: 0,
+    max: 49,
+    label: 'Very Low Confidence',
+    recommendation: 'Manual review strongly recommended',
+    color: 'red',
+    emoji: '🔴',
+  },
+}
+
 export const OWASP_TOP_10 = [
   { id: 'A01:2021', name: 'Broken Access Control' },
   { id: 'A02:2021', name: 'Cryptographic Failures' },

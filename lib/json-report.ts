@@ -9,6 +9,24 @@ export interface JsonReportOptions {
   vulnerabilities: Vulnerability[]
   userPlan: UserPlan
   siteUrl?: string
+  // V2.2 — Auto-fix confidence data (Pro+ only)
+  autoFixData?: {
+    fixed_files: Array<{
+      file_path: string
+      confidence?: {
+        overall: number
+        band: string
+        label: string
+        recommendation: string
+      }
+      vulnerabilities_fixed?: string[]
+      lines_changed?: number
+      status?: string
+    }>
+    fixed_count: number
+    total_vulns: number
+    completed_at: string | null
+  } | null
 }
 
 // Strip /tmp/kavach-scans/{scanId}/ prefix from file paths
@@ -26,7 +44,38 @@ function cleanFilePath(filePath: string | null): string {
 }
 
 export function generateJsonReport(opts: JsonReportOptions): string {
-  const { scan, vulnerabilities, userPlan, siteUrl = 'https://ai-kavach.vercel.app' } = opts
+  const { scan, vulnerabilities, userPlan, siteUrl = 'https://ai-kavach.vercel.app', autoFixData } = opts
+
+  // V2.2 — Build auto-fix summary (Pro+ only)
+  const autoFixSection = (() => {
+    if (!autoFixData || autoFixData.fixed_files.length === 0) return null
+
+    const successfulFixes = autoFixData.fixed_files.filter(f => f.status === 'fixed' && f.confidence)
+    if (successfulFixes.length === 0) return null
+
+    const avgConfidence = Math.round(
+      successfulFixes.reduce((sum, f) => sum + (f.confidence?.overall ?? 0), 0) / successfulFixes.length
+    )
+
+    return {
+      total_fixed: autoFixData.fixed_count,
+      total_vulns: autoFixData.total_vulns,
+      completed_at: autoFixData.completed_at,
+      average_confidence: avgConfidence,
+      files: successfulFixes.map(f => ({
+        file_path: cleanFilePath(f.file_path),
+        vulnerabilities_fixed_count: f.vulnerabilities_fixed?.length ?? 0,
+        vulnerability_ids: f.vulnerabilities_fixed ?? [],
+        lines_changed: f.lines_changed ?? 0,
+        confidence: {
+          score: f.confidence!.overall,
+          band: f.confidence!.band,
+          label: f.confidence!.label,
+          recommendation: f.confidence!.recommendation,
+        },
+      })),
+    }
+  })()
 
   const report = {
     // ── Meta ────────────────────────────────────────
@@ -111,6 +160,9 @@ export function generateJsonReport(opts: JsonReportOptions): string {
         is_false_positive: v.is_false_positive,
       },
     })),
+
+    // ── V2.2 — Auto-fix results with confidence (Pro+ only) ──
+    auto_fix: autoFixSection,
   }
 
   return JSON.stringify(report, null, 2)

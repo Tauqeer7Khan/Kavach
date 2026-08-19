@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Bot, Zap, ArrowRight, Sparkles } from 'lucide-react'
+import { Bot, Zap, ArrowRight, Sparkles, CheckCircle2, ListChecks } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface FixActionsCardProps {
@@ -9,6 +9,13 @@ interface FixActionsCardProps {
   userPlan: 'free' | 'pro' | 'enterprise'
   onOpenPromptModal: () => void
   autoFixButtonSlot: React.ReactNode  // Pass the AutoFixButton here
+  // V2.2 — Show fix summary in card heading
+  fixJob?: {
+    fixed_count: number
+    skipped_count: number
+    failed_count: number
+  } | null
+  onReset?: () => void
 }
 
 export function FixActionsCard({
@@ -16,6 +23,8 @@ export function FixActionsCard({
   userPlan,
   onOpenPromptModal,
   autoFixButtonSlot,
+  fixJob,
+  onReset,
 }: FixActionsCardProps) {
   // Don't show if no vulnerabilities
   if (vulnerabilityCount === 0) return null
@@ -52,8 +61,25 @@ export function FixActionsCard({
                 </span>
               </div>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Generates a detailed prompt with all vulnerabilities. Copy it and paste in Cursor, Copilot, Windsurf, ChatGPT, or Claude to fix everything in your IDE.
+                Generates a detailed prompt with all vulnerabilities. Copy it and paste in your favorite AI IDE to fix everything.
               </p>
+
+              {/* V2.2 — "Includes" info box (only shows after auto-fix completes, for symmetry with right card) */}
+              {fixJob && fixJob.fixed_count > 0 && (
+                <div className="mt-3 rounded-lg border border-indigo-500/15 bg-indigo-500/5 px-3 py-2">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <ListChecks className="h-3 w-3 text-indigo-400" />
+                    <span className="text-[10px] font-semibold text-indigo-300 uppercase tracking-wider">
+                      Includes
+                    </span>
+                  </div>
+                  <ul className="text-[11px] text-zinc-400 leading-relaxed space-y-0.5">
+                    <li>• {vulnerabilityCount} vulnerabilities with fixes</li>
+                    <li>• OWASP category mapping</li>
+                    <li>• Line numbers + code examples</li>
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
 
@@ -84,19 +110,48 @@ export function FixActionsCard({
               }`} />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h4 className={`text-sm font-semibold ${
-                  userPlan === 'free' ? 'text-zinc-400' : 'text-zinc-100'
-                }`}>
-                  Auto-Fix All
-                </h4>
-                <span className={`rounded-full text-[10px] font-bold px-1.5 py-0.5 ${
-                  userPlan === 'free'
-                    ? 'bg-purple-500/15 text-purple-400'
-                    : 'bg-purple-500/20 text-purple-300'
-                }`}>
-                  PRO
-                </span>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h4 className={`text-sm font-semibold ${
+                    userPlan === 'free' ? 'text-zinc-400' : 'text-zinc-100'
+                  }`}>
+                    Auto-Fix All
+                  </h4>
+                  <span className={`rounded-full text-[10px] font-bold px-1.5 py-0.5 shrink-0 ${
+                    userPlan === 'free'
+                      ? 'bg-purple-500/15 text-purple-400'
+                      : 'bg-purple-500/20 text-purple-300'
+                  }`}>
+                    PRO
+                  </span>
+                </div>
+
+                {/* V2.2 — Fix summary + Reset button in heading */}
+                {fixJob && fixJob.fixed_count > 0 && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-600/10 px-2 py-0.5">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
+                      <span className="text-xs text-zinc-300 whitespace-nowrap">
+                        <strong className="text-emerald-400">{fixJob.fixed_count}</strong> fixed
+                        {fixJob.skipped_count > 0 && (
+                          <span className="text-zinc-500 ml-1">· {fixJob.skipped_count} skipped</span>
+                        )}
+                        {fixJob.failed_count > 0 && (
+                          <span className="text-red-400 ml-1">· {fixJob.failed_count} failed</span>
+                        )}
+                      </span>
+                    </div>
+                    {onReset && (
+                      <button
+                        onClick={onReset}
+                        className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors px-1.5 py-0.5 rounded hover:bg-white/5"
+                        title="Reset auto-fix and start over"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
               <p className={`text-xs leading-relaxed ${
                 userPlan === 'free' ? 'text-zinc-500' : 'text-zinc-400'

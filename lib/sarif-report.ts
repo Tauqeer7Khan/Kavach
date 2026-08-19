@@ -13,6 +13,24 @@ export interface SarifReportOptions {
   scan: Scan & { projects?: { name?: string | null; repo_url?: string | null } | null }
   vulnerabilities: Vulnerability[]
   siteUrl?: string
+  // V2.2 — Auto-fix confidence data (Pro+ only)
+  autoFixData?: {
+    fixed_files: Array<{
+      file_path: string
+      confidence?: {
+        overall: number
+        band: string
+        label: string
+        recommendation: string
+      }
+      vulnerabilities_fixed?: string[]
+      lines_changed?: number
+      status?: string
+    }>
+    fixed_count: number
+    total_vulns: number
+    completed_at: string | null
+  } | null
 }
 
 // Strip /tmp/kavach-scans/{scanId}/ prefix
@@ -49,7 +67,37 @@ function severityToScore(severity: VulnerabilitySeverity | null): string {
 }
 
 export function generateSarifReport(opts: SarifReportOptions): string {
-  const { scan, vulnerabilities, siteUrl = 'https://ai-kavach.vercel.app' } = opts
+  const { scan, vulnerabilities, siteUrl = 'https://ai-kavach.vercel.app', autoFixData } = opts
+
+  // V2.2 — Build per-vulnerability confidence lookup (by vuln_id)
+  const vulnConfidenceMap = new Map<string, { overall: number; band: string; label: string }>()
+  if (autoFixData) {
+    autoFixData.fixed_files.forEach(f => {
+      if (f.status === 'fixed' && f.confidence && f.vulnerabilities_fixed) {
+        f.vulnerabilities_fixed.forEach(vulnId => {
+          vulnConfidenceMap.set(vulnId, {
+            overall: f.confidence!.overall,
+            band: f.confidence!.band,
+            label: f.confidence!.label,
+          })
+        })
+      }
+    })
+  }
+
+  // V2.2 — Also build per-file confidence for run-level properties
+  const fileConfidenceMap: Record<string, { overall: number; band: string; label: string }> = {}
+  if (autoFixData) {
+    autoFixData.fixed_files.forEach(f => {
+      if (f.status === 'fixed' && f.confidence) {
+        fileConfidenceMap[cleanFilePath(f.file_path)] = {
+          overall: f.confidence.overall,
+          band: f.confidence.band,
+          label: f.confidence.label,
+        }
+      }
+    })
+  }
 
   // Build unique rules from vulnerabilities
   const rulesMap = new Map<string, Record<string, unknown>>()
@@ -152,6 +200,12 @@ export function generateSarifReport(opts: SarifReportOptions): string {
         owasp: v.owasp_id,
         cwe: v.cwe_id,
         detection_method: v.detection_method,
+        // V2.2 — Fix confidence (if AI auto-fixed this vulnerability)
+        ...(vulnConfidenceMap.has(v.id) && {
+          kavach_fix_confidence: vulnConfidenceMap.get(v.id)!.overall,
+          kavach_fix_confidence_band: vulnConfidenceMap.get(v.id)!.band,
+          kavach_fix_confidence_label: vulnConfidenceMap.get(v.id)!.label,
+        }),
       },
     }
   })
@@ -192,6 +246,15 @@ export function generateSarifReport(opts: SarifReportOptions): string {
           grade: scan.grade,
           total_files_scanned: scan.files_scanned,
           total_lines_scanned: scan.lines_scanned,
+          // V2.2 — Auto-fix confidence per file (only present if fix ran)
+          ...(Object.keys(fileConfidenceMap).length > 0 && {
+            kavach_auto_fix: {
+              total_fixed: autoFixData?.fixed_count ?? 0,
+              total_vulns: autoFixData?.total_vulns ?? 0,
+              completed_at: autoFixData?.completed_at ?? null,
+              per_file_confidence: fileConfidenceMap,
+            },
+          }),
         },
       },
     ],

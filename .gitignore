@@ -95,3 +95,7 @@ fix_syntax.ts
 # Debug/test scripts (local only)
 query_*.js
 task*.js
+
+# Local DB reference files
+db_sample.txt
+db_schema.txt

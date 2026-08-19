@@ -71,6 +71,52 @@ function computeDiff(original: string, fixed: string): DiffLine[] {
   return result
 }
 
+// ── Confidence badge (V2.2) ────────────────────────────────
+
+function ConfidenceBadge({ 
+  confidence 
+}: { 
+  confidence: NonNullable<FixedFile['confidence']> 
+}) {
+  const bandStyles = {
+    high: {
+      bg: 'bg-emerald-500/10',
+      border: 'border-emerald-500/30',
+      text: 'text-emerald-400',
+      dot: 'bg-emerald-500',
+    },
+    medium: {
+      bg: 'bg-yellow-500/10',
+      border: 'border-yellow-500/30',
+      text: 'text-yellow-400',
+      dot: 'bg-yellow-500',
+    },
+    low: {
+      bg: 'bg-orange-500/10',
+      border: 'border-orange-500/30',
+      text: 'text-orange-400',
+      dot: 'bg-orange-500',
+    },
+    very_low: {
+      bg: 'bg-red-500/10',
+      border: 'border-red-500/30',
+      text: 'text-red-400',
+      dot: 'bg-red-500',
+    },
+  }
+
+  const styles = bandStyles[confidence.band]
+
+  return (
+    <div className={`flex items-center gap-2 rounded-md ${styles.bg} border ${styles.border} px-2.5 py-1`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} />
+      <span className={`text-[10px] font-semibold ${styles.text}`}>
+        {confidence.overall}% {confidence.label}
+      </span>
+    </div>
+  )
+}
+
 // ── File card ──────────────────────────────────────────────
 
 function FileCard({ file }: { file: FixedFile }) {
@@ -126,9 +172,16 @@ function FileCard({ file }: { file: FixedFile }) {
         </span>
         {statusIcon}
         {file.status === 'fixed' && (
-          <span className="text-[10px] text-zinc-500 ml-2 shrink-0">
-            {changedLines} lines changed
-          </span>
+          <>
+            <span className="text-[10px] text-zinc-500 ml-2 shrink-0">
+              {changedLines} lines changed
+            </span>
+            {file.confidence && (
+              <div className="ml-2 shrink-0">
+                <ConfidenceBadge confidence={file.confidence} />
+              </div>
+            )}
+          </>
         )}
         {(file.status === 'skipped' || file.status === 'failed') && (() => {
           const friendly = translateFixError(file.skip_reason)
@@ -140,6 +193,58 @@ function FileCard({ file }: { file: FixedFile }) {
           )
         })()}
       </button>
+
+      {/* Confidence details (V2.2) */}
+      {expanded && file.status === 'fixed' && file.confidence && (
+        <div className="border-t border-white/5 bg-zinc-950/30 px-4 py-3">
+          <div className="flex items-start gap-3">
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-zinc-300">
+                  🎯 Fix Confidence: {file.confidence.overall}%
+                </p>
+                <ConfidenceBadge confidence={file.confidence} />
+              </div>
+              <p className="text-[11px] text-zinc-400">
+                {file.confidence.recommendation}
+              </p>
+
+              {/* Factor breakdown — collapsible */}
+              <details className="group">
+                <summary className="text-[10px] text-zinc-500 cursor-pointer hover:text-zinc-400 select-none">
+                  Show scoring breakdown
+                </summary>
+                <div className="mt-2 grid grid-cols-2 gap-1.5 text-[10px]">
+                  <div className="flex justify-between px-2 py-1 rounded bg-zinc-900/50">
+                    <span className="text-zinc-500">Vuln type match</span>
+                    <span className="font-mono text-zinc-300">{file.confidence.factors.vuln_type_match}</span>
+                  </div>
+                  <div className="flex justify-between px-2 py-1 rounded bg-zinc-900/50">
+                    <span className="text-zinc-500">Fix size</span>
+                    <span className="font-mono text-zinc-300">{file.confidence.factors.fix_size}</span>
+                  </div>
+                  <div className="flex justify-between px-2 py-1 rounded bg-zinc-900/50">
+                    <span className="text-zinc-500">Detection consensus</span>
+                    <span className="font-mono text-zinc-300">{file.confidence.factors.detection_consensus}</span>
+                  </div>
+                  <div className="flex justify-between px-2 py-1 rounded bg-zinc-900/50">
+                    <span className="text-zinc-500">Code complexity</span>
+                    <span className="font-mono text-zinc-300">{file.confidence.factors.code_complexity}</span>
+                  </div>
+                  <div className="flex justify-between px-2 py-1 rounded bg-zinc-900/50">
+                    <span className="text-zinc-500">Test coverage</span>
+                    <span className="font-mono text-zinc-300">{file.confidence.factors.test_coverage_hint}</span>
+                  </div>
+                  <div className="flex justify-between px-2 py-1 rounded bg-zinc-900/50">
+                    <span className="text-zinc-500">AI self-rating</span>
+                    <span className="font-mono text-zinc-300">{file.confidence.factors.ai_self_rating}</span>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Diff content */}
       {expanded && file.status === 'fixed' && (

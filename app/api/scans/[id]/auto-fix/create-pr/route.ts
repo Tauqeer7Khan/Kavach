@@ -43,11 +43,11 @@ export async function POST(
 
     const scanId = params.id
     const body   = await req.json()
-    const { fixJobId, repoUrl, baseBranch, prTitle } = body as {
+    // V2.2 — prTitle removed from body; always auto-generated for branding consistency
+    const { fixJobId, repoUrl, baseBranch } = body as {
       fixJobId:    string
       repoUrl:     string
       baseBranch?: string
-      prTitle?:    string
     }
 
     if (!fixJobId || !repoUrl) {
@@ -166,8 +166,8 @@ export async function POST(
     }))
 
     // ── Build titles/bodies ───────────────────────────────
-    const finalPrTitle = prTitle?.trim() ||
-      `🛡️ Security fixes by KAVACH (${successfulFixes.length} ${successfulFixes.length === 1 ? 'file' : 'files'})`
+    // V2.2 — Title is ALWAYS auto-generated (branding requirement, not user-editable)
+    const finalPrTitle = `🛡️ Security fixes by KAVACH (${successfulFixes.length} ${successfulFixes.length === 1 ? 'file' : 'files'})`
 
     const finalPrBody = buildPRDescription({
       totalVulns:     fixJob.total_vulns,

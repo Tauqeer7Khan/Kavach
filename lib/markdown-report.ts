@@ -13,6 +13,24 @@ export interface ReportOptions {
   vulnerabilities: Vulnerability[]
   userPlan: UserPlan
   siteUrl?: string
+  // V2.2 — Auto-fix confidence data (Pro+ only)
+  autoFixData?: {
+    fixed_files: Array<{
+      file_path: string
+      confidence?: {
+        overall: number
+        band: string
+        label: string
+        recommendation: string
+      }
+      vulnerabilities_fixed?: string[]
+      lines_changed?: number
+      status?: string
+    }>
+    fixed_count: number
+    total_vulns: number
+    completed_at: string | null
+  } | null
 }
 
 // ─────────────────────────────────────────────────────────
@@ -53,7 +71,7 @@ function gradeLabel(grade: string | null): string {
 // ─────────────────────────────────────────────────────────
 
 export function generateMarkdownReport(opts: ReportOptions): string {
-  const { scan, vulnerabilities, userPlan, siteUrl = 'https://ai-kavach.vercel.app' } = opts
+  const { scan, vulnerabilities, userPlan, siteUrl = 'https://ai-kavach.vercel.app', autoFixData } = opts
 
   const isPro = userPlan === 'pro' || userPlan === 'enterprise'
   const isEnterprise = userPlan === 'enterprise'
@@ -140,6 +158,60 @@ export function generateMarkdownReport(opts: ReportOptions): string {
   parts.push(`| ${SEVERITY_EMOJI.LOW} Low | ${scan.low_count ?? 0} | ${pct(scan.low_count ?? 0)} |`)
   parts.push(`| ${SEVERITY_EMOJI.INFO} Info | ${scan.info_count ?? 0} | ${pct(scan.info_count ?? 0)} |`)
   parts.push('')
+
+  // V2.2 — Auto-Fix Results section (Pro+ only, only if auto-fix ran)
+  if (isPro && autoFixData && autoFixData.fixed_files.length > 0) {
+    const successfulFixes = autoFixData.fixed_files.filter(f => f.status === 'fixed' && f.confidence)
+
+    if (successfulFixes.length > 0) {
+      // Calculate average confidence
+      const avgConfidence = Math.round(
+        successfulFixes.reduce((sum, f) => sum + (f.confidence?.overall ?? 0), 0) / successfulFixes.length
+      )
+
+      const avgBandEmoji =
+        avgConfidence >= 90 ? '🟢' :
+        avgConfidence >= 70 ? '🟡' :
+        avgConfidence >= 50 ? '🟠' : '🔴'
+
+      parts.push(`## 🎯 Auto-Fix Results (KAVACH AI)`)
+      parts.push('')
+      parts.push(`**${autoFixData.fixed_count} of ${autoFixData.total_vulns} vulnerabilities auto-fixed by KAVACH's AI**`)
+      parts.push('')
+      parts.push(`**Average Fix Confidence:** ${avgBandEmoji} **${avgConfidence}%**`)
+      parts.push('')
+      parts.push(`### Per-File Confidence Breakdown`)
+      parts.push('')
+      parts.push(`| File | Vulnerabilities Fixed | Lines Changed | Confidence |`)
+      parts.push(`|------|----------------------|---------------|------------|`)
+
+      successfulFixes.forEach(f => {
+        const conf = f.confidence!
+        const bandEmoji =
+          conf.overall >= 90 ? '🟢' :
+          conf.overall >= 70 ? '🟡' :
+          conf.overall >= 50 ? '🟠' : '🔴'
+        const cleanPath = cleanFilePath(f.file_path)
+        parts.push(
+          `| \`${cleanPath}\` | ${f.vulnerabilities_fixed?.length ?? 0} | ${f.lines_changed ?? 0} | ${bandEmoji} ${conf.overall}% (${conf.label}) |`
+        )
+      })
+      parts.push('')
+
+      // Recommendation callout
+      const lowConfidenceFiles = successfulFixes.filter(f => (f.confidence?.overall ?? 100) < 70)
+      if (lowConfidenceFiles.length > 0) {
+        parts.push(`> ⚠️ **Review Recommended:** ${lowConfidenceFiles.length} file${lowConfidenceFiles.length === 1 ? '' : 's'} scored below 70% confidence. Please review the fixes carefully before merging to production.`)
+        parts.push('')
+      } else {
+        parts.push(`> ✅ **High Confidence:** All fixes scored 70% or higher. Still recommended to review changes before merging.`)
+        parts.push('')
+      }
+
+      parts.push(`---`)
+      parts.push('')
+    }
+  }
 
   // Priority Recommendations
   if ((scan.critical_count ?? 0) > 0 || (scan.high_count ?? 0) > 0) {

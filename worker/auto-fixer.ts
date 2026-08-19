@@ -5,6 +5,8 @@
 
 import { Ollama } from 'ollama'
 import { supabaseAdmin } from './supabase'
+import { calculateConfidenceForFile } from '../lib/confidence-scorer'
+import type { ConfidenceScore } from '../types'
 
 const ollama = new Ollama({
   host: process.env.OLLAMA_HOST || 'http://localhost:11434'
@@ -59,6 +61,7 @@ interface FileFixResult {
   lines_changed: number
   status: 'fixed' | 'skipped' | 'failed'
   skip_reason?: string
+  confidence?: ConfidenceScore   // V2.2 — Fix confidence score
 }
 
 // ─────────────────────────────────────────────────────────
@@ -410,6 +413,111 @@ function validateFix(
 }
 
 // ─────────────────────────────────────────────────────────
+// V2.2 — Get AI self-rating for confidence score
+// Retries once with stricter prompt if AI refuses
+// ─────────────────────────────────────────────────────────
+
+async function getAiSelfRating(
+  model: string,
+  filePath: string,
+  originalCode: string,
+  fixedCode: string,
+  vulnNames: string[]
+): Promise<number> {
+  const prompt = `You just applied a security fix. Rate your confidence.
+
+FILE: ${filePath}
+VULNERABILITIES FIXED: ${vulnNames.join(', ')}
+
+ORIGINAL CODE (excerpt):
+\`\`\`
+${originalCode.slice(0, 2000)}
+\`\`\`
+
+YOUR FIXED CODE (excerpt):
+\`\`\`
+${fixedCode.slice(0, 2000)}
+\`\`\`
+
+On a scale of 0-100, how confident are you that:
+1. The fix correctly addresses the vulnerability
+2. The fix does NOT break existing functionality
+3. The fix follows security best practices
+
+Rules:
+- Output ONLY a number between 0 and 100
+- No explanation, no words, just the number
+- Be honest — low confidence is okay for complex fixes
+
+Your confidence (0-100):`
+
+  try {
+    const response = await Promise.race([
+      ollama.chat({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        options: {
+          temperature: 0.1,
+          num_ctx: 4096,
+          num_predict: 10,
+        },
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Self-rating timeout')), 30_000)
+      )
+    ])
+
+    const output = response.message.content.trim()
+    const match = output.match(/\b(\d{1,3})\b/)
+
+    if (match) {
+      const rating = parseInt(match[1], 10)
+      if (rating >= 0 && rating <= 100) {
+        return rating
+      }
+    }
+
+    // Retry once with stricter prompt (per user decision Q3: Option B)
+    console.log(`⚠️ AI didn't give clear number, retrying strictly...`)
+    const retryPrompt = `RESPOND WITH ONLY A NUMBER 0-100. NO WORDS.
+
+Rate your confidence in the fix for ${filePath}: `
+
+    const retryResponse = await Promise.race([
+      ollama.chat({
+        model,
+        messages: [{ role: 'user', content: retryPrompt }],
+        options: {
+          temperature: 0.05,
+          num_ctx: 512,
+          num_predict: 5,
+        },
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Self-rating retry timeout')), 15_000)
+      )
+    ])
+
+    const retryOutput = retryResponse.message.content.trim()
+    const retryMatch = retryOutput.match(/\b(\d{1,3})\b/)
+
+    if (retryMatch) {
+      const rating = parseInt(retryMatch[1], 10)
+      if (rating >= 0 && rating <= 100) {
+        return rating
+      }
+    }
+
+    // Default to medium confidence if both attempts fail
+    console.log(`⚠️ AI self-rating failed, defaulting to 70`)
+    return 70
+  } catch (err: any) {
+    console.warn(`⚠️ AI self-rating error: ${err.message}, defaulting to 70`)
+    return 70
+  }
+}
+
+// ─────────────────────────────────────────────────────────
 // Fix one file using search/replace approach
 // ─────────────────────────────────────────────────────────
 
@@ -593,6 +701,34 @@ Output SEARCH/REPLACE blocks NOW. No more skipping.`
 
     console.log(`✅ Fixed ${filePath}: ${applyResult.blocksApplied} blocks applied, ${changedLines} lines changed (${elapsed}s)`)
 
+    // V2.2 — Calculate confidence score
+    console.log(`🎯 Calculating confidence for ${filePath}...`)
+    const aiSelfRating = await getAiSelfRating(
+      model,
+      filePath,
+      originalContent,
+      applyResult.fixedContent,
+      vulns.map(v => v.name)
+    )
+
+    // Detection methods from vulnerabilities (unique set)
+    const detectionMethods = Array.from(
+      new Set(vulns.map(v => (v as any).detection_method ?? 'ai'))
+    )
+
+    const confidence = calculateConfidenceForFile({
+      filePath,
+      vulnNames: vulns.map(v => v.name),
+      detectionMethods,
+      originalCode: originalContent,
+      fixedCode: applyResult.fixedContent,
+      linesChanged: changedLines,
+      allFilePaths: [], // Filled in by processAutoFixJob
+      aiSelfRating,
+    })
+
+    console.log(`🎯 Confidence for ${filePath}: ${confidence.overall}% (${confidence.label})`)
+
     return {
       file_path: filePath,
       original_content: originalContent,
@@ -600,6 +736,7 @@ Output SEARCH/REPLACE blocks NOW. No more skipping.`
       vulnerabilities_fixed: vulns.map(v => v.id),
       lines_changed: changedLines,
       status: 'fixed',
+      confidence,
     }
 
   } catch (error: any) {

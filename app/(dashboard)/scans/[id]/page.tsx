@@ -14,6 +14,7 @@ import { AutoPushFlow }               from '@/components/scans/AutoPushFlow'
 import { FixActionsCard }             from '@/components/scans/FixActionsCard'
 import { DiffViewer }                 from '@/components/scans/DiffViewer'
 import { DownloadReportButton }       from '@/components/scans/DownloadReportButton'
+import { CreatePRModal }              from '@/components/scans/CreatePRModal'
 import { detectLanguage, type ScanReportForPrompt } from '@/lib/prompt-generator'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -122,6 +123,14 @@ export default function ScanDetailPage() {
   const [showPromptModal, setShowPromptModal] = useState<boolean>(false)
   const [fixJob,          setFixJob]          = useState<FixJob | null>(null)
   const [showDiffViewer,  setShowDiffViewer]  = useState(false)
+  const [showPRModal,     setShowPRModal]     = useState(false)   // V2.2
+
+  // V2.2 — Reset handler for "Reset" button in FixActionsCard heading
+  const handleResetFix = () => {
+    setFixJob(null)
+    setShowDiffViewer(false)
+    setShowPRModal(false)
+  }
   const [userPlan,        setUserPlan]        = useState<'free'|'pro'|'enterprise'>('free')
   const [isCancelling,    setIsCancelling]    = useState(false)
   const { toast } = useToast()
@@ -586,8 +595,18 @@ export default function ScanDetailPage() {
               setFixJob(job)
               setShowDiffViewer(true)
             }}
+            onViewDiff={(job) => {
+              setFixJob(job)
+              setShowDiffViewer(true)
+            }}
+            onCreatePR={(job) => {
+              setFixJob(job)
+              setShowPRModal(true)
+            }}
           />
         }
+        fixJob={fixJob}
+        onReset={handleResetFix}
       />
 
       {/* Vulnerability List */}
@@ -666,6 +685,18 @@ export default function ScanDetailPage() {
           scanId={report.id}
           userPlan={userPlan}
           repoUrl={report.projects?.repo_url ?? undefined}
+        />
+      )}
+
+      {/* V2.2 — Standalone PR modal for Enterprise users */}
+      {fixJob && userPlan === 'enterprise' && (
+        <CreatePRModal
+          isOpen={showPRModal}
+          onClose={() => setShowPRModal(false)}
+          scanId={report.id}
+          fixJobId={fixJob.id}
+          repoUrl={report.projects?.repo_url ?? undefined}
+          filesCount={fixJob.fixed_count}
         />
       )}
     </div>
