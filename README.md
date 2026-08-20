@@ -9,7 +9,7 @@
 🔗 **Live Demo:** https://ai-kavach.vercel.app  
 📂 **Source:** https://github.com/Tauqeer7Khan/Kavach
 
-KAVACH is an open-source security analysis tool designed specifically for AI-generated code. It scans codebases built with ChatGPT, GitHub Copilot, Cursor, Bolt.new, v0.dev, and other AI coding tools to find security vulnerabilities that AI commonly introduces.
+KAVACH is an Open-source security analysis tool designed specifically for AI-generated code. It scans codebases built with ChatGPT, GitHub Copilot, Cursor, Bolt.new, v0.dev, and other AI coding tools to find security vulnerabilities that AI commonly introduces.
 
 ---
 
