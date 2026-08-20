@@ -1,494 +1,224 @@
+// app/(dashboard)/scans/[id]/page.tsx
+// KAVACH — Scan Report Details Page (V2.3 with One-Click Ignore)
+
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { useToast } from '@/hooks/use-toast'
+import * as React from 'react'
+import { useRouter } from 'next/navigation'
 import {
-  Shield, RotateCcw, Share2, AlertOctagon,
-  AlertTriangle, Info, XCircle, Search,
+  Shield,
+  RotateCcw,
+  Share2,
+  Check,
+  Search,
+  Filter,
+  ShieldOff,
+  AlertOctagon,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import SecurityScore from '@/components/dashboard/SecurityScore'
+import { detectLanguage } from '@/lib/prompt-generator'
+import { VulnerabilityCard } from '@/components/dashboard/VulnerabilityCard'
 import { AiFixPromptModal } from '@/components/scans/AiFixPromptModal'
 import { AutoFixButton, type FixJob } from '@/components/scans/AutoFixButton'
-import { AutoPushFlow }               from '@/components/scans/AutoPushFlow'
-import { FixActionsCard }             from '@/components/scans/FixActionsCard'
-import { DiffViewer }                 from '@/components/scans/DiffViewer'
-import { DownloadReportButton }       from '@/components/scans/DownloadReportButton'
-import { CreatePRModal }              from '@/components/scans/CreatePRModal'
-import { detectLanguage, type ScanReportForPrompt } from '@/lib/prompt-generator'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import SecurityScore from '@/components/dashboard/SecurityScore'
-import ScanProgress from '@/components/dashboard/ScanProgress'
-import VulnerabilityCard from '@/components/dashboard/VulnerabilityCard'
-import { createClient } from '@/lib/supabase-client'
+import { AutoPushFlow } from '@/components/scans/AutoPushFlow'
+import { FixActionsCard } from '@/components/scans/FixActionsCard'
+import { DiffViewer } from '@/components/scans/DiffViewer'
+import { DownloadReportButton } from '@/components/scans/DownloadReportButton'
+import { CreatePRModal } from '@/components/scans/CreatePRModal'
+import { useToast } from '@/hooks/use-toast'
+import type { Scan, Vulnerability, UserPlan, VulnerabilitySeverity } from '@/types'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+type FilterStatus = 'all' | 'active' | 'ignored'
+type SeverityFilter = 'ALL' | VulnerabilitySeverity
 
-type ScanStatus =
-  | 'queued' | 'downloading' | 'scanning'
-  | 'analyzing' | 'scoring' | 'completed' | 'failed' | 'cancelled'
-
-type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO'
-
-interface Vulnerability {
-  id: string
-  vuln_code: string
-  name: string
-  description: string
-  severity: Severity
-  owasp_category: string | null
-  owasp_id: string | null
-  file_path: string | null
-  line_number: number | null
-  vulnerable_code: string | null
-  fixed_code: string | null
-  ai_explanation: string | null
-  ai_fix_explanation: string | null
-  why_ai_makes_this_mistake: string | null
-  detection_method: string
-  is_fixed?: boolean
-  is_false_positive?: boolean
+interface ScanReport extends Scan {
+  projects?: { name: string | null; repo_url: string | null } | null
 }
 
-interface ScanReport {
-  id: string
-  status: ScanStatus
-  security_score: number | null
-  grade: string | null
-  total_vulnerabilities: number | null
-  critical_count: number | null
-  high_count: number | null
-  medium_count: number | null
-  low_count: number | null
-  info_count: number | null
-  files_scanned: number | null
-  lines_scanned: number | null
-  progress_percentage: number
-  progress_message: string | null
-  queue_position: number | null
-  error_message: string | null
-  created_at: string
-  projects?: {
-    name: string | null
-    repo_url: string | null
-  } | null
-  vulnerabilities?: Vulnerability[]
-  auto_push_enabled?: boolean
-  push_repo_url?: string | null
-  push_repo_owner?: string | null
-  push_repo_name?: string | null
-}
+export default function ScanReportPage({ params }: { params: { id: string } }) {
+  const router = useRouter()
+  const { toast } = useToast()
 
-// ─── Status title helper ──────────────────────────────────────────────────────
+  const [loading, setLoading] = React.useState(true)
+  const [report, setReport] = React.useState<ScanReport | null>(null)
+  const [vulnerabilities, setVulnerabilities] = React.useState<Vulnerability[]>([])
+  const [userPlan, setUserPlan] = React.useState<UserPlan>('free')
+  const [copiedLink, setCopiedLink] = React.useState(false)
 
-function getStatusTitle(status: ScanStatus): string {
-  const titles: Record<ScanStatus, string> = {
-    queued:      'Your scan is in queue',
-    downloading: 'Downloading your code...',
-    scanning:    'Running security checks...',
-    analyzing:   'AI is analyzing your code...',
-    scoring:     'Generating your report...',
-    completed:   'Scan Complete',
-    failed:      'Scan Failed',
-    cancelled:   'Scan Cancelled',
-  }
-  return titles[status]
-}
+  // V2.3 Filters
+  const [statusFilter, setStatusFilter] = React.useState<FilterStatus>('all')
+  const [severityFilter, setSeverityFilter] = React.useState<SeverityFilter>('ALL')
+  const [searchQuery, setSearchQuery] = React.useState('')
 
-// ─── Severity card data ───────────────────────────────────────────────────────
+  // Modals and Fix State
+  const [showPromptModal, setShowPromptModal] = React.useState<boolean>(false)
+  const [fixJob, setFixJob] = React.useState<FixJob | null>(null)
+  const [showDiffViewer, setShowDiffViewer] = React.useState(false)
+  const [showPRModal, setShowPRModal] = React.useState(false)
 
-const SEVERITY_CARDS = [
-  { key: 'critical_count', label: 'Critical', color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/20',    icon: AlertOctagon },
-  { key: 'high_count',     label: 'High',     color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20', icon: AlertTriangle },
-  { key: 'medium_count',   label: 'Medium',   color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20', icon: AlertTriangle },
-  { key: 'low_count',      label: 'Low',      color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/20',   icon: Info },
-] as const
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
-export default function ScanDetailPage() {
-  const params  = useParams()
-  const router  = useRouter()
-  const scanId  = params.id as string
-  const supabase = createClient()
-
-  const [report, setReport]           = useState<ScanReport | null>(null)
-  const [isLoading, setIsLoading]     = useState<boolean>(true)
-  const [severityFilter, setSeverityFilter] = useState<string>('all')
-  const [search, setSearch]           = useState<string>('')
-  const [copied, setCopied]           = useState<boolean>(false)
-  const [showPromptModal, setShowPromptModal] = useState<boolean>(false)
-  const [fixJob,          setFixJob]          = useState<FixJob | null>(null)
-  const [showDiffViewer,  setShowDiffViewer]  = useState(false)
-  const [showPRModal,     setShowPRModal]     = useState(false)   // V2.2
-
-  // V2.2 — Reset handler for "Reset" button in FixActionsCard heading
   const handleResetFix = () => {
     setFixJob(null)
     setShowDiffViewer(false)
     setShowPRModal(false)
   }
-  const [userPlan,        setUserPlan]        = useState<'free'|'pro'|'enterprise'>('free')
-  const [isCancelling,    setIsCancelling]    = useState(false)
-  const { toast } = useToast()
 
-  // ── Fetch report ─────────────────────────────────────────────────────────
-
-  const fetchReport = useCallback(async (): Promise<void> => {
+  // Fetch report data
+  const fetchReport = React.useCallback(async () => {
     try {
-      const res = await fetch(`/api/scan/${scanId}/report`)
+      setLoading(true)
+      const res = await fetch(`/api/scans/${params.id}`)
       if (!res.ok) {
-        console.error('Report fetch failed:', res.status)
+        if (res.status === 404) router.push('/dashboard')
         return
       }
-      const json = await res.json() as { success: boolean; scan: ScanReport; vulnerabilities?: Vulnerability[] }
-      console.log('[Scan Page] Report response:', json)
-
-      if (!json.success || !json.scan) {
-        console.error('[Scan Page] Invalid report response')
-        return
-      }
-
-      setReport({
-        ...json.scan,
-        vulnerabilities: json.vulnerabilities ?? [],
-      })
+      const data = await res.json()
+      setReport(data.scan)
+      setVulnerabilities(data.vulnerabilities ?? [])
+      setUserPlan(data.userPlan ?? 'free')
     } catch (err) {
-      console.error('Fetch report error:', err)
+      console.error('Failed to load report:', err)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
-  }, [scanId])
+  }, [params.id, router])
 
-  const fetchStatus = useCallback(async (): Promise<void> => {
-    try {
-      const res = await fetch(`/api/scan/${scanId}`)
-      if (!res.ok) {
-        console.error('Scan fetch failed:', res.status)
-        setIsLoading(false)
-        return
-      }
-      const json = await res.json() as { success: boolean; scan: ScanReport }
-      console.log('[Scan Page] Status response:', json)
+  React.useEffect(() => {
+    fetchReport()
+  }, [fetchReport])
 
-      if (!json.success || !json.scan) {
-        console.error('[Scan Page] Invalid response structure')
-        setIsLoading(false)
-        return
-      }
-
-      const data = json.scan
-      setReport(prev => prev ? { ...prev, ...data } : data)
-
-      if (data.status === 'completed' || data.status === 'failed' || data.status === 'cancelled') {
-        if (data.status === 'completed') {
-          await fetchReport()
-        }
-      }
-    } catch (err) {
-      console.error('Fetch status error:', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [scanId, fetchReport])
-
-  // ── Polling + Realtime ────────────────────────────────────────────────────
-
-  useEffect(() => {
-    console.log('[Scan Page] scanId:', scanId)
-    console.log('[Scan Page] Starting fetch...')
-    
-    // Fetch user plan for tier check
-    const fetchUserPlan = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-        const { data: userData } = await supabase
-          .from('users')
-          .select('plan')
-          .eq('id', user.id)
-          .single()
-        if (userData?.plan) {
-          setUserPlan(userData.plan as 'free' | 'pro' | 'enterprise')
-        }
-      } catch {}
-    }
-    fetchUserPlan()
-
-    let stopped = false
-    void fetchStatus()
-
-    const interval = setInterval(() => {
-      if (stopped) return
-      void fetchStatus()
-    }, 3000)
-
-    // Supabase Realtime
-    const channel = supabase
-      .channel(`scan-page-${scanId}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'scans',
-        filter: `id=eq.${scanId}`,
-      }, (payload: { new: Record<string, unknown> }) => {
-        const row = payload.new
-        setReport(prev => prev ? { ...prev, ...row } as ScanReport : null)
-        if (row.status === 'completed' || row.status === 'failed' || row.status === 'cancelled') {
-          stopped = true
-          clearInterval(interval)
-          if (row.status === 'completed') {
-            void fetchReport()
-          }
-        }
-      })
-      .subscribe()
-
-    return () => {
-      stopped = true
-      clearInterval(interval)
-      void supabase.removeChannel(channel)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scanId])
-
-  // ── Share handler ─────────────────────────────────────────────────────────
-
-  const handleShare = async (): Promise<void> => {
-    await navigator.clipboard.writeText(window.location.href)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  // Handle Share Report Link
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href)
+    setCopiedLink(true)
+    toast({
+      title: 'Link Copied',
+      description: 'Report URL copied to clipboard.',
+    })
+    setTimeout(() => setCopiedLink(false), 2500)
   }
 
-  // ── Cancel handler ────────────────────────────────────────────────────────
+  // Handle One-Click Ignore Toggle Callback
+  const handleIgnoreToggle = (
+    vulnId: string,
+    isIgnored: boolean,
+    reason?: string,
+    newScore?: number,
+    newGrade?: string
+  ) => {
+    // 1. Update vulnerability in local state
+    setVulnerabilities(prev =>
+      prev.map(v =>
+        v.id === vulnId
+          ? { ...v, is_false_positive: isIgnored, false_positive_reason: reason ?? null }
+          : v
+      )
+    )
 
-  const handleCancel = async () => {
-    setIsCancelling(true)
-    try {
-      const res = await fetch(`/api/scans/${scanId}/cancel`, { method: 'POST' })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || 'Failed to cancel scan')
-      }
-      toast({ title: 'Scan Cancelled', description: 'The scan has been stopped.' })
-      await fetchStatus()
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error'
-      toast({ title: 'Error', description: message, variant: 'destructive' })
-    } finally {
-      setIsCancelling(false)
+    // 2. Update scan score & grade live in report state
+    if (typeof newScore === 'number' && newGrade && report) {
+      setReport(prev =>
+        prev
+          ? {
+              ...prev,
+              security_score: newScore,
+              grade: newGrade as import('@/types').ScanGrade,
+            }
+          : prev
+      )
     }
+
+    toast({
+      title: isIgnored ? 'Vulnerability Ignored' : 'Vulnerability Restored',
+      description: isIgnored
+        ? `Marked as ${reason || 'Accepted Risk'}. Security score recalculated.`
+        : 'Restored to active findings. Security score recalculated.',
+    })
   }
 
-  // ── Filter vulnerabilities ────────────────────────────────────────────────
+  if (loading || !report) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
+        <Shield className="h-10 w-10 text-purple-500 animate-pulse" />
+        <p className="text-sm text-zinc-400">Loading security report...</p>
+      </div>
+    )
+  }
 
-  const filteredVulns = (report?.vulnerabilities ?? []).filter(v => {
-    const matchSeverity = severityFilter === 'all' || v.severity === severityFilter.toUpperCase()
-    const matchSearch   = !search ||
-      v.name.toLowerCase().includes(search.toLowerCase()) ||
-      (v.file_path ?? '').toLowerCase().includes(search.toLowerCase())
-    return matchSeverity && matchSearch
+  // Active vs Ignored Counts
+  const activeVulns = vulnerabilities.filter(v => !v.is_false_positive)
+  const ignoredVulns = vulnerabilities.filter(v => v.is_false_positive)
+
+  // Filtered Vulnerabilities List
+  const filteredVulnerabilities = vulnerabilities.filter(v => {
+    // Status Filter
+    if (statusFilter === 'active' && v.is_false_positive) return false
+    if (statusFilter === 'ignored' && !v.is_false_positive) return false
+
+    // Severity Filter
+    if (severityFilter !== 'ALL' && v.severity !== severityFilter) return false
+
+    // Search Query Filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      const matchName = v.name.toLowerCase().includes(q)
+      const matchFile = v.file_path?.toLowerCase().includes(q) ?? false
+      const matchDesc = v.description?.toLowerCase().includes(q) ?? false
+      if (!matchName && !matchFile && !matchDesc) return false
+    }
+
+    return true
   })
 
-  // ── Loading ───────────────────────────────────────────────────────────────
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <Shield className="h-12 w-12 text-indigo-500 animate-pulse" />
-          <p className="text-zinc-600 dark:text-zinc-400">Loading scan...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!report || !report.status) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <XCircle className="h-12 w-12 text-red-400" />
-        <p className="text-zinc-900 dark:text-white font-semibold">Scan not found or missing status data</p>
-        <Button variant="outline" onClick={() => router.push('/scans')}>
-          Back to Scans
-        </Button>
-      </div>
-    )
-  }
-
-  // ── In Progress ───────────────────────────────────────────────────────────
-
-  if (report.status !== 'completed' && report.status !== 'failed' && report.status !== 'cancelled') {
-    return (
-      <div className="max-w-2xl mx-auto py-12">
-        <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-2xl p-8 space-y-8">
-          {/* Icon + Title */}
-          <div className="text-center space-y-3">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500/20">
-              <Shield className="h-8 w-8 text-indigo-400 animate-pulse" />
-            </div>
-            <h1 className="text-xl font-bold text-zinc-900 dark:text-white">
-              {getStatusTitle(report.status)}
-            </h1>
-          </div>
-
-          {/* Progress steps */}
-          <ScanProgress
-            status={report.status}
-            progress={report.progress_percentage ?? 0}
-            progressMessage={report.progress_message ?? undefined}
-            queuePosition={report.queue_position}
-          />
-
-          {/* Cancel */}
-          <div className="flex items-center justify-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-zinc-500 dark:text-zinc-500 hover:text-zinc-300"
-              onClick={() => router.push('/scans')}
-            >
-              ← Back to scans
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={isCancelling}
-              onClick={handleCancel}
-              className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
-            >
-              {isCancelling ? 'Cancelling...' : 'Cancel Scan'}
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Failed ────────────────────────────────────────────────────────────────
-
-  if (report.status === 'failed') {
-    return (
-      <div className="max-w-2xl mx-auto py-12">
-        <div className="bg-white dark:bg-[#111111] border border-red-500/20 rounded-2xl p-8 text-center space-y-4">
-          <XCircle className="h-12 w-12 text-red-400 mx-auto" />
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-white">Scan Failed</h1>
-          <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-            {report.error_message ?? 'An unexpected error occurred.'}
-          </p>
-          <Button
-            className="bg-indigo-600 hover:bg-indigo-700 text-zinc-900 dark:text-white"
-            onClick={() => router.push('/scans/new')}
-          >
-            Try Again
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Cancelled ─────────────────────────────────────────────────────────────
-
-  if (report.status === 'cancelled') {
-    return (
-      <div className="max-w-2xl mx-auto py-12">
-        <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-2xl p-8 text-center space-y-4">
-          <XCircle className="h-12 w-12 text-zinc-500 mx-auto" />
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-white">Scan Cancelled</h1>
-          <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-            {report.progress_message ?? 'This scan was cancelled by the user.'}
-          </p>
-          <div className="flex items-center justify-center gap-4 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => router.push('/scans')}
-              className="border-zinc-200 dark:border-[#1f1f1f]"
-            >
-              Back to Scans
-            </Button>
-            <Button
-              className="bg-indigo-600 hover:bg-indigo-700 text-zinc-900 dark:text-white"
-              onClick={() => router.push('/scans/new')}
-            >
-              Start New Scan
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Completed Report ──────────────────────────────────────────────────────
-
-  // Map Supabase Vulnerability → VulnerabilityForPrompt for the modal
-  const promptReport: ScanReportForPrompt = {
-    scanId:      report.id,
-    projectName: report.projects?.name ?? 'This Project',
-    vulnerabilities: (report.vulnerabilities ?? []).map((v) => ({
-      id:             v.id,
-      type:           v.name,
-      severity:       (v.severity ?? 'MEDIUM').toLowerCase(),
-      filePath:       v.file_path        ?? '',
-      lineNumber:     v.line_number      ?? 0,
-      vulnerableCode: v.vulnerable_code  ?? '',
-      fixedCode:      v.fixed_code       ?? '',
-      explanation:    v.ai_explanation   ?? v.description ?? '',
-      fixReasoning:   v.ai_fix_explanation ?? '',
-      owaspId:        v.owasp_id         ?? undefined,
-      language:       detectLanguage(v.file_path ?? ''),
-    })),
-  }
-
-  const autoPushEnabled = report.auto_push_enabled ?? false
-  const pushRepoUrl = report.push_repo_url ?? null
-
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-
+    <div className="max-w-6xl mx-auto space-y-8 p-6 pb-24">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-            {report.projects?.name ?? 'Security Report'}
-          </h1>
-          <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">
-            {new Date(report.created_at).toLocaleDateString('en-US', {
-              month: 'long', day: 'numeric', year: 'numeric',
-              hour: '2-digit', minute: '2-digit',
-            })}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">
+              {report.projects?.name ?? 'Scan Report'}
+            </span>
+            <span className="text-xs text-zinc-600">·</span>
+            <span className="text-xs text-zinc-500 font-mono">{report.id.slice(0, 8)}</span>
+          </div>
+          <h1 className="text-2xl font-bold text-zinc-100 mt-1">Security Scan Results</h1>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Analyzed {report.files_scanned ?? 0} files ({(report.lines_scanned ?? 0).toLocaleString()} lines) using {report.analysis_engine ?? 'Semgrep + AI'}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <DownloadReportButton
-            scanId={report.id}
-            userPlan={userPlan}
-          />
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <DownloadReportButton scanId={report.id} userPlan={userPlan} />
+
           <Button
+            size="sm"
             variant="outline"
-            size="sm"
             onClick={handleShare}
-            className="border-zinc-200 dark:border-[#1f1f1f] text-zinc-300 hover:bg-white/5 bg-transparent"
+            className="border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 text-xs h-9"
           >
-            <Share2 className="h-4 w-4 mr-2" />
-            {copied ? 'Copied!' : 'Share'}
+            {copiedLink ? <Check className="h-3.5 w-3.5 mr-1.5 text-emerald-400" /> : <Share2 className="h-3.5 w-3.5 mr-1.5" />}
+            Share
           </Button>
+
           <Button
             size="sm"
-            className="bg-indigo-600 hover:bg-indigo-700 text-zinc-900 dark:text-white"
             onClick={() => router.push('/scans/new')}
+            className="bg-purple-600 hover:bg-purple-500 text-white text-xs h-9"
           >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Rescan
+            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+            New Scan
           </Button>
         </div>
       </div>
 
-      {/* Score + Stats row */}
-      <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-2xl p-6">
-        <div className="flex flex-col md:flex-row items-center gap-8">
-          {/* Score circle */}
+      {/* Top Overview Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Security Score Widget */}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 flex flex-col items-center justify-center text-center">
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+            Security Health Score
+          </span>
           <SecurityScore
             score={report.security_score ?? 0}
             size="lg"
@@ -496,101 +226,77 @@ export default function ScanDetailPage() {
             showLabel
             animated
           />
+        </div>
 
-          {/* Divider */}
-          <div className="w-px h-32 bg-[#1f1f1f] hidden md:block" />
-
-          {/* Severity grid */}
-          <div className="grid grid-cols-2 gap-3 flex-1 w-full">
-            {SEVERITY_CARDS.map(({ key, label, color, bg, icon: Icon }) => (
-              <div key={key} className={`rounded-xl border p-4 ${bg}`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <Icon className={`h-4 w-4 ${color}`} />
-                  <span className={`text-xs font-medium ${color}`}>{label}</span>
-                </div>
-                <p className={`text-2xl font-bold ${color}`}>
-                  {(report[key as keyof ScanReport] as number | null) ?? 0}
-                </p>
-              </div>
-            ))}
+        {/* Severity Metrics Card */}
+        <div className="md:col-span-2 rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+              Vulnerability Breakdown
+            </span>
+            <span className="text-xs font-bold text-zinc-300">
+              {activeVulns.length} Active {ignoredVulns.length > 0 && `· ${ignoredVulns.length} Ignored`}
+            </span>
           </div>
 
-          {/* Divider */}
-          <div className="w-px h-32 bg-[#1f1f1f] hidden md:block" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-center">
+              <span className="text-xs text-red-400 font-semibold block">Critical</span>
+              <span className="text-2xl font-bold text-red-300 mt-1 block">
+                {activeVulns.filter(v => v.severity === 'CRITICAL').length}
+              </span>
+            </div>
 
-          {/* Scan metadata */}
-          <div className="space-y-3 text-sm min-w-[140px]">
-            <div>
-              <p className="text-zinc-500 dark:text-zinc-500 text-xs">Files Scanned</p>
-              <p className="text-zinc-900 dark:text-white font-semibold">{report.files_scanned ?? 0}</p>
+            <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-3 text-center">
+              <span className="text-xs text-orange-400 font-semibold block">High</span>
+              <span className="text-2xl font-bold text-orange-300 mt-1 block">
+                {activeVulns.filter(v => v.severity === 'HIGH').length}
+              </span>
             </div>
-            <div>
-              <p className="text-zinc-500 dark:text-zinc-500 text-xs">Lines Scanned</p>
-              <p className="text-zinc-900 dark:text-white font-semibold">
-                {(report.lines_scanned ?? 0).toLocaleString()}
-              </p>
+
+            <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3 text-center">
+              <span className="text-xs text-yellow-400 font-semibold block">Medium</span>
+              <span className="text-2xl font-bold text-yellow-300 mt-1 block">
+                {activeVulns.filter(v => v.severity === 'MEDIUM').length}
+              </span>
             </div>
-            <div>
-              <p className="text-zinc-500 dark:text-zinc-500 text-xs">Total Issues</p>
-              <p className="text-zinc-900 dark:text-white font-semibold">{report.total_vulnerabilities ?? 0}</p>
+
+            <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-3 text-center">
+              <span className="text-xs text-blue-400 font-semibold block">Low</span>
+              <span className="text-2xl font-bold text-blue-300 mt-1 block">
+                {activeVulns.filter(v => v.severity === 'LOW').length}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Enterprise auto-push flow — shows above FixActionsCard */}
-      <AutoPushFlow
-        scanId={report.id}
-        scanStatus={report.status}
-        autoPushEnabled={autoPushEnabled}
-        pushRepoUrl={pushRepoUrl}
-        vulnerabilityIds={
-          (report.vulnerabilities ?? [])
-            .filter(v => !v.is_fixed && !v.is_false_positive)
-            .map(v => v.id)
-        }
-        vulnerabilityCount={
-          (report.vulnerabilities ?? [])
-            .filter(v => !v.is_fixed && !v.is_false_positive)
-            .length
-        }
-        userPlan={userPlan}
-      />
-
-      {/* Privacy: show expiry notice for scans older than 48h */}
-      {report.status === 'completed' &&
-        new Date(report.created_at).getTime() < Date.now() - 48 * 60 * 60 * 1000 && (
-        <div className="flex items-center gap-2 text-xs text-zinc-500 mb-2">
-          <Shield className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-          <span>
-            Source files auto-removed after 48h for your privacy. 
-            Rescan to use Auto-Fix.
-          </span>
-        </div>
+      {/* Auto-Push Workflow Section */}
+      {report.auto_push_enabled && report.push_repo_url && (
+        <AutoPushFlow
+          scanId={report.id}
+          scanStatus={report.status}
+          autoPushEnabled={report.auto_push_enabled}
+          pushRepoUrl={report.push_repo_url}
+          vulnerabilityIds={activeVulns.filter(v => !v.is_fixed).map(v => v.id)}
+          vulnerabilityCount={activeVulns.filter(v => !v.is_fixed).length}
+          userPlan={userPlan}
+        />
       )}
-      {/* NEW: Fix Actions Card */}
+
+      {/* Ready to Fix Section */}
       <FixActionsCard
-        vulnerabilityCount={
-          (report.vulnerabilities ?? [])
-            .filter(v => !v.is_fixed && !v.is_false_positive)
-            .length
-        }
+        vulnerabilityCount={activeVulns.length}
         userPlan={userPlan}
         onOpenPromptModal={() => setShowPromptModal(true)}
+        fixJob={fixJob}
+        onReset={handleResetFix}
         autoFixButtonSlot={
           <AutoFixButton
             scanId={report.id}
             userPlan={userPlan}
-            vulnerabilityIds={
-              (report.vulnerabilities ?? [])
-                .filter(v => !v.is_fixed && !v.is_false_positive)
-                .map(v => v.id)
-            }
-            vulnerabilityCount={
-              (report.vulnerabilities ?? [])
-                .filter(v => !v.is_fixed && !v.is_false_positive)
-                .length
-            }
+            vulnerabilityIds={activeVulns.filter(v => !v.is_fixed).map(v => v.id)}
+            vulnerabilityCount={activeVulns.filter(v => !v.is_fixed).length}
             onFixComplete={(job) => {
               setFixJob(job)
               setShowDiffViewer(true)
@@ -605,78 +311,131 @@ export default function ScanDetailPage() {
             }}
           />
         }
-        fixJob={fixJob}
-        onReset={handleResetFix}
       />
 
-      {/* Vulnerability List */}
-      <div className="space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-            Vulnerabilities
-            <Badge className="ml-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-300 border-0">
-              {filteredVulns.length}
-            </Badge>
-          </h2>
+      {/* Vulnerabilities Toolbar & Filters */}
+      <div className="space-y-4 pt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-bold text-zinc-100">Findings</h3>
+            <span className="rounded-full bg-zinc-800 text-zinc-300 text-xs font-bold px-2 py-0.5">
+              {filteredVulnerabilities.length}
+            </span>
+          </div>
 
-          {/* Filter + Search */}
-          <div className="flex items-center gap-3">
-            {/* Search */}
-            <div className="relative">
-              <Search className="h-4 w-4 text-zinc-500 dark:text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <Input
-                placeholder="Search vulnerabilities..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-9 h-9 bg-white dark:bg-[#111111] border-zinc-200 dark:border-[#1f1f1f] text-zinc-900 dark:text-white placeholder:text-zinc-600 text-sm w-48"
-              />
-            </div>
-
-            {/* Severity tabs */}
-            <Tabs value={severityFilter} onValueChange={setSeverityFilter}>
-              <TabsList className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] h-9">
-                {['all', 'critical', 'high', 'medium', 'low'].map(s => (
-                  <TabsTrigger
-                    key={s}
-                    value={s}
-                    className="capitalize text-xs data-[state=active]:bg-indigo-600 data-[state=active]:text-zinc-900 dark:text-white h-7"
-                  >
-                    {s}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+          {/* Search Box */}
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search vulnerabilities..."
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-200 pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+            />
           </div>
         </div>
 
-        {/* Cards */}
-        {filteredVulns.length === 0 ? (
-          <div className="text-center py-12 text-zinc-500 dark:text-zinc-500">
-            <Shield className="h-10 w-10 mx-auto mb-3 text-zinc-700" />
-            <p>No vulnerabilities match your filter</p>
+        {/* Filter Bar (Active vs Ignored + Severity) */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+          {/* Status Filter (All / Active / Ignored) */}
+          <div className="flex items-center gap-1 bg-zinc-900/80 p-1 rounded-lg border border-zinc-800">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${
+                statusFilter === 'all' ? 'bg-purple-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              All ({vulnerabilities.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('active')}
+              className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${
+                statusFilter === 'active' ? 'bg-purple-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              Active ({activeVulns.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('ignored')}
+              className={`text-xs px-3 py-1 rounded-md font-medium transition-colors flex items-center gap-1 ${
+                statusFilter === 'ignored' ? 'bg-purple-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              <ShieldOff className="h-3 w-3" />
+              Ignored ({ignoredVulns.length})
+            </button>
+          </div>
+
+          {/* Severity Filters */}
+          <div className="flex items-center gap-1 overflow-x-auto">
+            <Filter className="h-3.5 w-3.5 text-zinc-500 mr-1" />
+            {(['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const).map(sev => (
+              <button
+                key={sev}
+                onClick={() => setSeverityFilter(sev)}
+                className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors ${
+                  severityFilter === sev
+                    ? 'border-purple-500/50 bg-purple-500/15 text-purple-300'
+                    : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                }`}
+              >
+                {sev}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Vulnerabilities Cards List */}
+        {filteredVulnerabilities.length === 0 ? (
+          <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-12 text-center space-y-3">
+            <AlertOctagon className="h-8 w-8 text-zinc-600 mx-auto" />
+            <p className="text-sm font-semibold text-zinc-300">No vulnerabilities found</p>
+            <p className="text-xs text-zinc-500">
+              {statusFilter === 'ignored'
+                ? 'No vulnerabilities have been ignored yet.'
+                : 'No issues match your current filters or search query.'}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredVulns.map(v => (
-              <VulnerabilityCard key={v.id} vulnerability={v} />
+            {filteredVulnerabilities.map(v => (
+              <VulnerabilityCard
+                key={v.id}
+                vulnerability={v}
+                scanId={report.id}
+                userPlan={userPlan}
+                onIgnoreToggle={handleIgnoreToggle}
+              />
             ))}
           </div>
         )}
       </div>
 
-      {/* Back link */}
-      <div className="pb-8">
-        <Link href="/scans" className="text-sm text-zinc-500 dark:text-zinc-500 hover:text-zinc-300 transition-colors">
-          ← Back to all scans
-        </Link>
-      </div>
-
-      {/* AI Fix Prompt Modal */}
+      {/* AI Master Prompt Modal (Free Tier) */}
       <AiFixPromptModal
         isOpen={showPromptModal}
         onClose={() => setShowPromptModal(false)}
-        scanReport={promptReport}
+        scanReport={{
+          scanId: report.id,
+          projectName: report.projects?.name ?? 'This Project',
+          vulnerabilities: activeVulns.map((v) => ({
+            id: v.id,
+            type: v.name,
+            severity: (v.severity ?? 'MEDIUM').toLowerCase(),
+            filePath: v.file_path ?? '',
+            lineNumber: v.line_number ?? 0,
+            vulnerableCode: v.vulnerable_code ?? '',
+            fixedCode: v.fixed_code ?? '',
+            explanation: v.ai_explanation ?? v.description ?? '',
+            fixReasoning: v.ai_fix_explanation ?? '',
+            owaspId: v.owasp_id ?? undefined,
+            language: detectLanguage(v.file_path ?? ''),
+          })),
+        }}
       />
+
+      {/* Standalone Diff Viewer */}
       {fixJob && (
         <DiffViewer
           isOpen={showDiffViewer}
@@ -688,7 +447,7 @@ export default function ScanDetailPage() {
         />
       )}
 
-      {/* V2.2 — Standalone PR modal for Enterprise users */}
+      {/* Standalone PR Modal (Enterprise) */}
       {fixJob && userPlan === 'enterprise' && (
         <CreatePRModal
           isOpen={showPRModal}
