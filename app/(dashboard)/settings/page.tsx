@@ -10,6 +10,8 @@ import { Progress } from '@/components/ui/progress'
 import { Mail, User } from 'lucide-react'
 import { GithubIcon } from '@/components/shared/GithubIcon'
 import { CouponSection } from '@/components/settings/CouponSection'
+import { UpgradeCard } from '@/components/settings/UpgradeCard'
+import { Suspense } from 'react'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -25,6 +27,7 @@ export default async function SettingsPage() {
   const scansUsed    = profile?.scans_used_this_month ?? 0
   const scansLimit   = profile?.scans_limit ?? 15
   const scansPercent = Math.round((scansUsed / scansLimit) * 100)
+  const currentPlan  = profile?.plan ?? 'free'
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -73,8 +76,14 @@ export default async function SettingsPage() {
           <div className="flex items-center gap-3 text-sm">
             <User className="h-4 w-4 text-zinc-500 dark:text-zinc-500" />
             <span className="text-zinc-600 dark:text-zinc-400">Plan</span>
-            <Badge className="ml-auto bg-zinc-100 dark:bg-zinc-800 text-zinc-300 border-0 capitalize">
-              {profile?.plan ?? 'free'}
+            <Badge className={`ml-auto border-0 capitalize ${
+              currentPlan === 'enterprise'
+                ? 'bg-amber-500/20 text-amber-300'
+                : currentPlan === 'pro'
+                ? 'bg-indigo-500/20 text-indigo-300'
+                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300'
+            }`}>
+              {currentPlan}
             </Badge>
           </div>
         </div>
@@ -88,23 +97,36 @@ export default async function SettingsPage() {
           <div className="flex justify-between text-sm">
             <span className="text-zinc-600 dark:text-zinc-400">Scans used</span>
             <span className="text-zinc-900 dark:text-white font-medium">
-              {scansUsed} / {scansLimit}
+              {scansUsed} / {scansLimit === 99999 ? '∞' : scansLimit}
             </span>
           </div>
-          <Progress value={scansPercent} className="h-2 bg-[#1f1f1f]" />
+          <Progress value={scansLimit === 99999 ? 0 : scansPercent} className="h-2 bg-[#1f1f1f]" />
           <p className="text-xs text-zinc-500 dark:text-zinc-500">
             Resets on the 1st of each month
           </p>
         </div>
 
-        {scansUsed >= scansLimit && (
+        {scansUsed >= scansLimit && scansLimit !== 99999 && (
           <div className="bg-amber-500/10 border border-amber-500/20 
                           rounded-lg p-3 text-sm text-amber-300">
             You&apos;ve reached your monthly scan limit.
-            Upgrade to Pro for unlimited scans.
+            Upgrade to Pro for more scans.
           </div>
         )}
       </div>
+
+      {/* ── STRIPE UPGRADE SECTION ─────────────────── */}
+      <Suspense fallback={
+        <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-xl p-6 animate-pulse">
+          <div className="h-6 bg-zinc-200 dark:bg-zinc-800 rounded w-40 mb-4" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="h-64 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl" />
+            <div className="h-64 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl" />
+          </div>
+        </div>
+      }>
+        <UpgradeCard currentPlan={currentPlan} />
+      </Suspense>
 
       {/* Account Info Card */}
       <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-xl p-6 space-y-3">
