@@ -5,6 +5,7 @@ import {
   STRIPE_PRO_PRICE_ID,
   STRIPE_ENTERPRISE_PRICE_ID,
 } from '@/lib/stripe'
+import type Stripe from 'stripe'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
     // 5. Create Stripe Checkout Session
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-    const sessionConfig: any = {
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [

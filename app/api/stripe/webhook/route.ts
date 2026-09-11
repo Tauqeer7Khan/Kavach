@@ -71,7 +71,8 @@ export async function POST(request: Request) {
       const plan = getPlanFromPriceId(priceId)
       const scansLimit = PLAN_LIMITS[plan] || 15
 
-      const rawPeriodEnd = (subscription as any).current_period_end
+      const subWithPeriod = subscription as unknown as { current_period_end?: number }
+      const rawPeriodEnd = subWithPeriod.current_period_end
       const periodEndIso = rawPeriodEnd
         ? new Date(rawPeriodEnd * 1000).toISOString()
         : null
@@ -116,7 +117,8 @@ export async function POST(request: Request) {
       const plan = getPlanFromPriceId(priceId)
       const scansLimit = PLAN_LIMITS[plan] || 15
 
-      const rawPeriodEnd = (subscription as any).current_period_end
+      const subWithPeriod = subscription as unknown as { current_period_end?: number }
+      const rawPeriodEnd = subWithPeriod.current_period_end
       const periodEndIso = rawPeriodEnd
         ? new Date(rawPeriodEnd * 1000).toISOString()
         : null
