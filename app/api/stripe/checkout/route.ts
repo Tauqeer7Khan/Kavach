@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     //    If yes, redirect to billing portal instead
     const { data: profile } = await supabase
       .from('users')
-      .select('plan')
+      .select('plan, stripe_customer_id')
       .eq('id', user.id)
       .single()
 
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     // 5. Create Stripe Checkout Session
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig: any = {
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [
@@ -66,7 +66,6 @@ export async function POST(request: Request) {
           quantity: 1,
         },
       ],
-      customer_email: user.email || undefined,
       success_url: `${appUrl}/settings?payment=success`,
       cancel_url: `${appUrl}/settings?payment=canceled`,
       metadata: {
@@ -77,7 +76,16 @@ export async function POST(request: Request) {
           userId: user.id,
         },
       },
-    })
+    }
+
+    // Bind existing Stripe customer if available to avoid duplicate customer records
+    if (profile?.stripe_customer_id) {
+      sessionConfig.customer = profile.stripe_customer_id
+    } else {
+      sessionConfig.customer_email = user.email || undefined
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig)
 
     return NextResponse.json({ url: session.url })
   } catch (error: unknown) {

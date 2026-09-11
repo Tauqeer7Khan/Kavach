@@ -43,8 +43,7 @@ export async function POST(request: Request) {
       const session = event.data.object as Stripe.Checkout.Session
 
       // Get userId from metadata
-      const userId =
-        session.metadata?.userId || session.client_reference_id
+      const userId = session.metadata?.userId || session.client_reference_id
 
       if (!userId) {
         console.error('No userId in checkout session metadata')
@@ -52,14 +51,16 @@ export async function POST(request: Request) {
       }
 
       // Get subscription to find the price ID
-      if (!session.subscription) {
+      const subscriptionId = typeof session.subscription === 'string'
+        ? session.subscription
+        : session.subscription?.id
+
+      if (!subscriptionId) {
         console.error('No subscription in checkout session')
         break
       }
 
-      const subscription = await stripe.subscriptions.retrieve(
-        session.subscription as string
-      )
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId)
       const priceId = subscription.items.data[0]?.price?.id
 
       if (!priceId) {
@@ -70,12 +71,25 @@ export async function POST(request: Request) {
       const plan = getPlanFromPriceId(priceId)
       const scansLimit = PLAN_LIMITS[plan] || 15
 
-      // Update user plan in database
+      const rawPeriodEnd = (subscription as any).current_period_end
+      const periodEndIso = rawPeriodEnd
+        ? new Date(rawPeriodEnd * 1000).toISOString()
+        : null
+
+      const customerId = typeof session.customer === 'string'
+        ? session.customer
+        : session.customer?.id || null
+
+      // Update user plan and Stripe details in database
       const { error } = await supabase
         .from('users')
         .update({
           plan,
           scans_limit: scansLimit,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscription.id,
+          subscription_status: subscription.status,
+          subscription_period_end: periodEndIso,
           updated_at: new Date().toISOString(),
         })
         .eq('id', userId)
@@ -89,7 +103,7 @@ export async function POST(request: Request) {
       break
     }
 
-    // ── SUBSCRIPTION UPDATED (plan change) ───────────
+    // ── SUBSCRIPTION UPDATED (plan change/status change) ───────────
     case 'customer.subscription.updated': {
       const subscription = event.data.object as Stripe.Subscription
       const userId = subscription.metadata?.userId
@@ -102,11 +116,19 @@ export async function POST(request: Request) {
       const plan = getPlanFromPriceId(priceId)
       const scansLimit = PLAN_LIMITS[plan] || 15
 
+      const rawPeriodEnd = (subscription as any).current_period_end
+      const periodEndIso = rawPeriodEnd
+        ? new Date(rawPeriodEnd * 1000).toISOString()
+        : null
+
       await supabase
         .from('users')
         .update({
           plan,
           scans_limit: scansLimit,
+          stripe_subscription_id: subscription.id,
+          subscription_status: subscription.status,
+          subscription_period_end: periodEndIso,
           updated_at: new Date().toISOString(),
         })
         .eq('id', userId)
@@ -122,26 +144,34 @@ export async function POST(request: Request) {
 
       if (!userId) {
         // Fallback: find user by customer email
-        const customerId = subscription.customer as string
-        try {
-          const customer = (await stripe.customers.retrieve(
-            customerId
-          )) as Stripe.Customer
+        const customerId = typeof subscription.customer === 'string'
+          ? subscription.customer
+          : subscription.customer?.id
 
-          if (customer.email) {
-            await supabase
-              .from('users')
-              .update({
-                plan: 'free',
-                scans_limit: 15,
-                updated_at: new Date().toISOString(),
-              })
-              .eq('email', customer.email)
+        if (customerId) {
+          try {
+            const customer = (await stripe.customers.retrieve(
+              customerId
+            )) as Stripe.Customer
 
-            console.log(`⬇️ User ${customer.email} downgraded to free`)
+            if (customer.email) {
+              await supabase
+                .from('users')
+                .update({
+                  plan: 'free',
+                  scans_limit: 15,
+                  stripe_subscription_id: null,
+                  subscription_status: 'canceled',
+                  subscription_period_end: null,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('email', customer.email)
+
+              console.log(`⬇️ User ${customer.email} downgraded to free`)
+            }
+          } catch (e) {
+            console.error('Failed to downgrade user:', e)
           }
-        } catch (e) {
-          console.error('Failed to downgrade user:', e)
         }
         break
       }
@@ -151,6 +181,9 @@ export async function POST(request: Request) {
         .update({
           plan: 'free',
           scans_limit: 15,
+          stripe_subscription_id: null,
+          subscription_status: 'canceled',
+          subscription_period_end: null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', userId)
@@ -165,7 +198,6 @@ export async function POST(request: Request) {
       console.warn(
         `⚠️ Payment failed for customer ${invoice.customer}`
       )
-      // Future: send email notification here
       break
     }
 

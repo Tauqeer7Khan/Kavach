@@ -19,7 +19,7 @@ export async function POST() {
     // 2. Check if user has a paid plan
     const { data: profile } = await supabase
       .from('users')
-      .select('plan')
+      .select('plan, stripe_customer_id')
       .eq('id', user.id)
       .single()
 
@@ -30,24 +30,36 @@ export async function POST() {
       )
     }
 
-    // 3. Find Stripe customer by email
-    const customers = await stripe.customers.list({
-      email: user.email,
-      limit: 1,
-    })
+    let customerId = profile.stripe_customer_id
 
-    if (customers.data.length === 0) {
-      return NextResponse.json(
-        { error: 'No billing account found' },
-        { status: 404 }
-      )
+    // Fallback: search by email if Stripe Customer ID is missing from DB
+    if (!customerId) {
+      const customers = await stripe.customers.list({
+        email: user.email,
+        limit: 1,
+      })
+
+      if (customers.data.length === 0) {
+        return NextResponse.json(
+          { error: 'No billing account found' },
+          { status: 404 }
+        )
+      }
+
+      customerId = customers.data[0].id
+
+      // Backfill customer ID into DB so we don't list next time
+      await supabase
+        .from('users')
+        .update({ stripe_customer_id: customerId })
+        .eq('id', user.id)
     }
 
     // 4. Create billing portal session
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
     const session = await stripe.billingPortal.sessions.create({
-      customer: customers.data[0].id,
+      customer: customerId,
       return_url: `${appUrl}/settings`,
     })
 

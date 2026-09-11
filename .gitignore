@@ -99,3 +99,4 @@ task*.js
 # Local DB reference files
 db_sample.txt
 db_schema.txt
+KAVACH-STATUS.md
