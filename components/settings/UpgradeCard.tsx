@@ -10,13 +10,20 @@ import {
   ExternalLink,
   Sparkles,
   Shield,
+  Calendar,
 } from 'lucide-react'
 
 interface UpgradeCardProps {
   currentPlan: string
+  subscriptionStatus?: string | null
+  subscriptionPeriodEnd?: string | null
 }
 
-export function UpgradeCard({ currentPlan }: UpgradeCardProps) {
+export function UpgradeCard({
+  currentPlan,
+  subscriptionStatus,
+  subscriptionPeriodEnd,
+}: UpgradeCardProps) {
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
@@ -111,36 +118,65 @@ export function UpgradeCard({ currentPlan }: UpgradeCardProps) {
         </div>
       )}
 
-      {/* Manage Subscription (for paid users) */}
+      {/* Subscription Status Overview (for paid users) */}
       {isPaid && (
-        <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-xl p-6 space-y-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-base font-semibold text-zinc-900 dark:text-white">
-                Subscription
-              </h2>
-              <p className="text-zinc-500 dark:text-zinc-500 text-sm mt-0.5">
-                You&apos;re on the{' '}
-                <span className="text-indigo-400 font-medium capitalize">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-zinc-900 dark:text-white">
+                  Subscription Overview
+                </h2>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                    subscriptionStatus === 'active' || !subscriptionStatus
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                  {subscriptionStatus
+                    ? subscriptionStatus.replace('_', ' ').toUpperCase()
+                    : 'ACTIVE'}
+                </span>
+              </div>
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">
+                You are currently on the{' '}
+                <span className="text-indigo-500 dark:text-indigo-400 font-semibold capitalize">
                   {currentPlan}
                 </span>{' '}
-                plan
+                plan.
               </p>
+              {subscriptionPeriodEnd && (
+                <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                  <Calendar className="h-3.5 w-3.5 text-indigo-400" />
+                  <span>
+                    Billing cycle ends:{' '}
+                    <strong className="text-zinc-800 dark:text-zinc-200 font-mono">
+                      {new Date(subscriptionPeriodEnd).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </strong>
+                  </span>
+                </div>
+              )}
             </div>
+
             <button
               onClick={handlePortal}
               disabled={loading === 'portal'}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium
-                         bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300
-                         hover:bg-zinc-200 dark:hover:bg-zinc-700
-                         rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium
+                         bg-indigo-600 hover:bg-indigo-500 text-white
+                         rounded-lg shadow-sm transition-all disabled:opacity-50 shrink-0"
             >
               {loading === 'portal' ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <ExternalLink className="h-4 w-4" />
               )}
-              Manage Billing
+              Manage Subscription
             </button>
           </div>
         </div>

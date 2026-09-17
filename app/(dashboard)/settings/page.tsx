@@ -4,6 +4,7 @@ export const metadata = {
   title: 'Settings | KAVACH',
   description: 'Manage your KAVACH account and preferences',
 }
+
 import { createClient } from '@/lib/supabase-server'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -15,7 +16,9 @@ import { Suspense } from 'react'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase
@@ -24,10 +27,12 @@ export default async function SettingsPage() {
     .eq('id', user.id)
     .single()
 
-  const scansUsed    = profile?.scans_used_this_month ?? 0
-  const scansLimit   = profile?.scans_limit ?? 15
+  const scansUsed = profile?.scans_used_this_month ?? 0
+  const scansLimit = profile?.scans_limit ?? 15
   const scansPercent = Math.round((scansUsed / scansLimit) * 100)
-  const currentPlan  = profile?.plan ?? 'free'
+  const currentPlan = profile?.plan ?? 'free'
+  const subscriptionStatus = profile?.subscription_status ?? null
+  const subscriptionPeriodEnd = profile?.subscription_period_end ?? null
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -97,16 +102,16 @@ export default async function SettingsPage() {
           <div className="flex justify-between text-sm">
             <span className="text-zinc-600 dark:text-zinc-400">Scans used</span>
             <span className="text-zinc-900 dark:text-white font-medium">
-              {scansUsed} / {scansLimit === 99999 ? '∞' : scansLimit}
+              {scansUsed} / {scansLimit >= 99999 ? '∞' : scansLimit}
             </span>
           </div>
-          <Progress value={scansLimit === 99999 ? 0 : scansPercent} className="h-2 bg-[#1f1f1f]" />
+          <Progress value={scansLimit >= 99999 ? 0 : scansPercent} className="h-2 bg-[#1f1f1f]" />
           <p className="text-xs text-zinc-500 dark:text-zinc-500">
             Resets on the 1st of each month
           </p>
         </div>
 
-        {scansUsed >= scansLimit && scansLimit !== 99999 && (
+        {scansUsed >= scansLimit && scansLimit < 99999 && (
           <div className="bg-amber-500/10 border border-amber-500/20 
                           rounded-lg p-3 text-sm text-amber-300">
             You&apos;ve reached your monthly scan limit.
@@ -115,7 +120,7 @@ export default async function SettingsPage() {
         )}
       </div>
 
-      {/* ── STRIPE UPGRADE SECTION ─────────────────── */}
+      {/* ── STRIPE UPGRADE & SUBSCRIPTION OVERVIEW SECTION ─────────────────── */}
       <Suspense fallback={
         <div className="bg-white dark:bg-[#111111] border border-zinc-200 dark:border-[#1f1f1f] rounded-xl p-6 animate-pulse">
           <div className="h-6 bg-zinc-200 dark:bg-zinc-800 rounded w-40 mb-4" />
@@ -125,7 +130,11 @@ export default async function SettingsPage() {
           </div>
         </div>
       }>
-        <UpgradeCard currentPlan={currentPlan} />
+        <UpgradeCard 
+          currentPlan={currentPlan}
+          subscriptionStatus={subscriptionStatus}
+          subscriptionPeriodEnd={subscriptionPeriodEnd}
+        />
       </Suspense>
 
       {/* Account Info Card */}
